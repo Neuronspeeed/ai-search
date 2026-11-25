@@ -1423,6 +1423,49 @@
           <li><strong>Click "kubeproxy (fluke)", then raise min_occurrences to 3.</strong> A word seen in just 2 posts looks clearly related (relatedness about +0.6) purely by luck. The noise floor removes it.</li>
         </ol>
 
+        <h3>Walking the graph: one hop, then two</h3>
+        <p class="prose">
+          A semantic knowledge graph is not stored anywhere. Each edge is computed on the fly: take the posts that contain
+          a word, then score every other word by how much more often it appears there than chance (the relatedness score
+          above). Click a word to make it the new center. A second hop narrows the posts to those containing <em>both</em>
+          words, which is how one meaning of an ambiguous word gets picked.
+        </p>
+
+        <!-- DEMO: KNOWLEDGE GRAPH WALK -->
+        <div class="lab" id="lab-kg">
+          <div class="lab-header">
+            <div class="lab-title-group">
+              <span class="lab-badge">DEMO 4.3</span>
+              <span class="lab-name">Walk a Knowledge Graph Built from 4,000 Posts</span>
+            </div>
+            <span class="lab-hint">Click a word to hop · turn on hop 2 to split meanings</span>
+          </div>
+
+          <div class="preset-row">
+            <span class="preset-label">Start at:</span>
+            <button type="button" class="pill-btn active" data-kg-start="econnreset">econnreset</button>
+            <button type="button" class="pill-btn adversarial" data-kg-start="driver">driver (3 meanings)</button>
+            <button type="button" class="pill-btn" data-kg-start="timeout">timeout</button>
+            <button type="button" class="pill-btn" data-kg-start="invoice">invoice</button>
+            <label class="check-pill"><input type="checkbox" id="chk-kg-hop2" /> Show hop 2</label>
+            <button type="button" class="pill-btn" id="btn-kg-back" disabled>← Back</button>
+          </div>
+
+          <div class="plot-title">path: <span class="t-brand" id="kg-trail">econnreset</span></div>
+          <div class="canvas-wrap framed">
+            <canvas id="canvas-kg" class="viz kg interactive" tabindex="0" role="application" aria-label="Knowledge graph. The center word is linked to its most related words; line thickness is the relatedness score. Click a word, or use arrow keys and Enter, to hop to it. Backspace goes back."></canvas>
+          </div>
+          <p class="lab-legend">Line thickness and the number on each line = relatedness (−1 to +1), computed live from a toy forum of 4,000 posts. Colors are topics: <span class="t-brand">network errors</span>, <span class="t-blue">databases</span>, <span class="t-amber">golf</span>, <span class="t-coral">rideshare</span>, and gray for billing. Only words seen in at least 5 posts with relatedness ≥ 0.2 are drawn. Dashed lines are the second hop.</p>
+          <div class="readout lab-readout" id="ro-kg" aria-live="polite"></div>
+        </div>
+
+        <ol class="walkthrough">
+          <li><strong>Start on "econnreset".</strong> Every neighbor is a network-error word (socket, retry, keepalive…), each above +0.9. Words like "the" never appear: they are in almost every post, so their relatedness is about 0.</li>
+          <li><strong>Click "driver (3 meanings)".</strong> Its neighbors come from databases, golf, and rideshare at once. Expanding "driver" into all of them would send a database search to golf pages.</li>
+          <li><strong>Tick "Show hop 2".</strong> Each branch now uses only the posts that contain both words. From "postgres" the second hop stays in databases, from "tee" it stays in golf. That is the two-level traversal: pick the meaning first, then expand.</li>
+          <li><strong>Click any neighbor to hop to it, and "Back" to return.</strong> The path above the graph shows your walk. Every edge is recomputed for the new center.</li>
+        </ol>
+
         <h3>Learning spelling corrections from query logs</h3>
         <p class="prose">
           An off-the-shelf spellchecker picks the nearby word that appears most in your <em>documents</em>. For example,
@@ -1441,7 +1484,7 @@
         <div class="lab" id="lab-spell">
           <div class="lab-header">
             <div class="lab-title-group">
-              <span class="lab-badge">DEMO 4.3</span>
+              <span class="lab-badge">DEMO 4.4</span>
               <span class="lab-name">Learn Spelling Fixes from a Query Log</span>
             </div>
             <span class="lab-hint">Move the cutoffs · watch right vs. wrong fixes</span>

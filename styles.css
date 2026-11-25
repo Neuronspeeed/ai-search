@@ -2230,3 +2230,7 @@ canvas.viz.d3.interactive { cursor: move; }
   .plot-pair.lead { grid-template-columns: 1fr; }
   canvas.viz.d3 { height: 320px; }
 }
+
+/* ---- knowledge graph demo ---- */
+canvas.viz.kg { height: 400px; }
+@media (max-width: 600px) { canvas.viz.kg { height: 360px; } }
