@@ -296,7 +296,7 @@ function initBm25Lab(getTokens, prepCanvas, redrawCallbacks) {
       const sat = wThis / ceil;
       const satTxt = sat > 0.85 ? `It's already at ${Math.round(sat * 100)}% of the ceiling, so more mentions barely help.` : sat > 0.6 ? `It's at ${Math.round(sat * 100)}% of the ceiling: extra mentions still help, but less each time.` : "It's still low on the curve, so each extra mention adds a lot.";
       const lenTxt = b === 0 ? "Length is ignored (b = 0)." : Math.abs(lenRatio - 1) < 0.03 ? "At average length there's no length penalty." : lenRatio > 1 ? `Being ${lenRatio.toFixed(2)}× longer than average costs ${Math.abs(diffPct)}%.` : `Being shorter than average adds ${diffPct}%.`;
-      readout(document.getElementById("ro-bm25"), [["tf", tf], ["length", `${lenRatio.toFixed(2)}×`], ["weight", wThis.toFixed(2)], ["ceiling", ceil.toFixed(1)]], `${tf} mentions → ${wThis.toFixed(2)}, not ${tf}. ${satTxt} ${lenTxt}`);
+      readout(document.getElementById("ro-bm25"), [["tf", tf], ["length", `${lenRatio.toFixed(2)}×`], ["weight", wThis.toFixed(2)], ["ceiling", ceil.toFixed(1)]], `${tf} mention${tf === 1 ? "" : "s"} → ${wThis.toFixed(2)}, not ${tf}. ${satTxt} ${lenTxt}`);
     }
 
     // ---- live corpus list
@@ -421,7 +421,7 @@ function initBoostLab(getTokens, prepCanvas, redrawCallbacks) {
         : A.hijack && !M.hijack ? `With +, "${label(A.winner.d)}" gets the same flat bonus whatever its text score, so popularity beats relevance. With ×, its bonus is a share of a tiny text score (${A.winner.d.bm25}), so it can't win.`
         : A.hijack && M.hijack ? "The boost is so large that even × lets a barely-matching page win. Turn w down."
         : scenario === "common" ? "Text scores are close, so popularity breaks the tie in both models. That's when a boost helps."
-        : "The text match is strong enough that the bonus doesn't flip the order in either model. Raise w to see + break first.";
+        : "The text match is strong enough that the bonus doesn't change the #1 in either model. Raise w to see + break first.";
       readout(document.getElementById("ro-boost"), [["w", w0.toFixed(1)], ["+ winner", label(A.winner.d)], ["× winner", label(M.winner.d)]], why, A.hijack ? "warn" : "");
     }
 

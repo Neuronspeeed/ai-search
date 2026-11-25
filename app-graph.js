@@ -228,9 +228,11 @@ export function initGraphLab({ getTokens, prepCanvas, redrawCallbacks }) {
       }
       tone = "warn";
     } else {
-      verdict = `All of the strongest neighbors of "${center}" come from ${topics.length ? KG_TOPICS[topics[0]].name : "one topic"}: ${top3}. Words like "the" never show up, because they appear everywhere (relatedness ≈ 0).`;
+      const the = related(forum, [center]).find((r) => r.w === "the");
+      const theTxt = the ? ` (${the.rel >= 0 ? "+" : "−"}${Math.abs(the.rel).toFixed(2)} here, chance noise)` : "";
+      verdict = `All of the strongest neighbors of "${center}" come from ${topics.length ? KG_TOPICS[topics[0]].name : "one topic"}: ${top3}. Words like "the" never show up: they appear everywhere, so their relatedness stays near 0${theTxt}.`;
     }
-    const fg = hop1[0] ? hop1[0].fgSize : 0;
+    const fg = forum.posts.filter((p) => p.has(center)).length;
     readout(document.getElementById("ro-kg"), [["center", center], ["posts with it", fg.toLocaleString()], ["neighbors", hop1.length]], verdict, tone);
   }
 

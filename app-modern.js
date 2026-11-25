@@ -195,7 +195,7 @@ export function initModernLabs({ getTokens, prepCanvas, redrawCallbacks }) {
   const WORMHOLE_STEPS = {
     semantic: {
       title: "1. Enter in Dense Semantic Space",
-      desc: "Query \"socket hang up\" lands near ECONNRESET docs in text-embedding space, but has zero behavioral click neighbors yet.",
+      desc: "Query \"socket hang up\" lands near ECONNRESET docs in text-embedding space, but it has no vector in behavioral click space: text cannot be embedded there directly.",
       bridge: "Anchor docs: [d1: Fixing ECONNRESET, d2: Keep-Alive Pools]",
     },
     wormhole: {
@@ -205,7 +205,7 @@ export function initModernLabs({ getTokens, prepCanvas, redrawCallbacks }) {
     },
     behavioral: {
       title: "3. Retrieve in Behavioral Space",
-      desc: "Nearest neighbors in behavioral space surface docs users actually solved this issue with next (e.g., \"ALB Idle Timeout 60s Guide\"), even with zero keyword or semantic overlap.",
+      desc: "Nearest neighbors in behavioral space surface docs users actually solved this issue with next (e.g., \"ALB Idle Timeout 60s Guide\"), even when they share no keywords with the query.",
       bridge: "Discovered: [ALB 60s Idle Timeout, Node http.Agent maxSockets]",
     },
   };
@@ -256,11 +256,11 @@ export function initModernLabs({ getTokens, prepCanvas, redrawCallbacks }) {
     cacheOutEl.className = `rag-status ${falsePositive ? "abstain" : ""}`;
 
     if (falsePositive) {
-      cacheOutEl.innerHTML = `<strong>FALSE POSITIVE CACHE HIT (sim ${q.sim.toFixed(2)} ≥ τ ${tau.toFixed(2)}):</strong> Served the cached ECONNRESET answer for a timeout question! Raise τ_cache above ${q.sim.toFixed(2)} (this pair's similarity).`;
+      cacheOutEl.innerHTML = `<strong>FALSE POSITIVE CACHE HIT (sim ${q.sim.toFixed(2)} ≥ τ ${tau.toFixed(2)}):</strong> Served the cached ECONNRESET answer to a different question about request timeouts. To block this pair, τ_cache must be above ${q.sim.toFixed(2)} (its similarity).`;
     } else if (isHit) {
-      cacheOutEl.innerHTML = `<strong>CACHE HIT (sim ${q.sim.toFixed(2)} ≥ τ ${tau.toFixed(2)}):</strong> Matched cached query "fix econnreset in node". Returned in 3 ms with $0 LLM cost.`;
+      cacheOutEl.innerHTML = `<strong>CACHE HIT (sim ${q.sim.toFixed(2)} ≥ τ ${tau.toFixed(2)}):</strong> Matched cached query "fix econnreset in node". Returned the stored answer in milliseconds, with no search and no LLM call.`;
     } else {
-      cacheOutEl.innerHTML = `<strong>CACHE MISS (sim ${q.sim.toFixed(2)} &lt; τ ${tau.toFixed(2)}):</strong> Bypassed cache. Running full hybrid search + LLM generation (~1–3 s) and caching the new result.`;
+      cacheOutEl.innerHTML = `<strong>CACHE MISS (sim ${q.sim.toFixed(2)} &lt; τ ${tau.toFixed(2)}):</strong> Bypassed cache. Running full hybrid search + LLM generation (seconds, not milliseconds) and caching the new result.${cacheQuery === "paraphrase" ? " This one is a missed hit: it asks the same thing as the cached query, but τ_cache is set above its similarity." : ""}`;
     }
   }
 
@@ -282,11 +282,11 @@ export function initModernLabs({ getTokens, prepCanvas, redrawCallbacks }) {
   let agentStepIdx = 1;
 
   const AGENT_TRACE = [
-    { step: "1. Plan", detail: "User asks: 'Why does my Node service throw ECONNRESET only behind AWS ALB?' Decompose into 2 sub-queries." },
+    { step: "1. Plan", detail: "User asks: 'Why do requests to my Node service fail with ECONNRESET and 502s only behind AWS ALB?' Decompose into 2 sub-queries." },
     { step: "2. Tool Call (BM25)", detail: "search_lexical('ECONNRESET Node') -> returns [d1: Fixing ECONNRESET, d2: Keep-Alive Pools]. Missing ALB timeout numbers." },
     { step: "3. Self-Critique", detail: "Gap detected: docs mention load balancer idle timeout, but do not state AWS ALB's 60s default. Issue targeted vector query." },
-    { step: "4. Tool Call (Dense)", detail: "search_dense('load balancer closes idle keepalive before client') -> retrieves 'ALB 60s Idle Timeout vs Node 5s/65s Keep-Alive'." },
-    { step: "5. Synthesize + Cite", detail: "Answer grounded in [d1] + [ALB Guide]: set Node keepAliveTimeout > ALB idle timeout (e.g., 65s vs 60s) and enable idempotent retries." },
+    { step: "4. Tool Call (Dense)", detail: "search_dense('load balancer reuses a keep-alive connection the server already closed') -> retrieves 'ALB 60s Idle Timeout vs Node 5s Default keepAliveTimeout'." },
+    { step: "5. Synthesize + Cite", detail: "Answer grounded in [d1] + [ALB Guide]: set the Node server's keepAliveTimeout above the ALB idle timeout (e.g., 65s vs 60s) so the ALB never reuses a socket Node already closed, and retry idempotent requests." },
   ];
 
   function renderAgentLoop() {

@@ -148,7 +148,7 @@ export function learnCorrections(lowQ, highQ, rule) {
       .sort((a, b) => b.f.users - a.f.users);
     if (options.length) {
       const best = options[0];
-      learned.push({ from: t.word, to: best.f.word, dist: best.dist, ok: t.fix === best.f.word });
+      learned.push({ from: t.word, to: best.f.word, dist: best.dist, ok: t.fix === best.f.word, real: !t.fix });
     }
   }
   const learnedFrom = new Set(learned.map((l) => l.from));
@@ -518,7 +518,7 @@ function initSpellLab() {
           <tbody>${r.learned.map((l) => `
             <tr class="${l.ok ? "" : "spell-bad"}">
               <td>${escapeHtml(l.from)}</td><td>${escapeHtml(l.to)}</td><td>${l.dist}</td>
-              <td>${l.ok ? "✓" : "✗ real word"}</td>
+              <td>${l.ok ? "✓" : l.real ? "✗ real word" : "✗ wrong fix"}</td>
             </tr>`).join("")}</tbody>
         </table>`
       : `<p class="spell-dim">No corrections learned. Raise the typo cutoff or lower the correction cutoff.</p>`;
@@ -630,9 +630,11 @@ function initNewsLab() {
       const main = FACTOR_META.map((fm) => ({ ...fm, v: top.parts[fm.key] })).sort((x, y) => y.v - x.v)[0];
       const share = Math.round((main.v / Math.max(1e-6, top.total)) * 100);
       const textOnly = w.fresh + w.near + w.pop === 0;
-      const why = textOnly
+      const why = textOnly && w.text === 0
+        ? "Every weight is 0, so every article scores 0 and the order means nothing. Raise at least one weight."
+        : textOnly
         ? `Text only: "${top.d.title}" wins on word matches, even though it's ${ageLabel(top.d.days)} and ${top.d.km.toLocaleString()} km away. Great for "basketball", bad for news.`
-        : `"${top.d.title}" wins mostly on ${main.label.toLowerCase()} (${share}% of its score). Each factor is scaled to 0–1 first, so no single unit dominates.`;
+        : `"${top.d.title}" wins mostly on ${main.label.toLowerCase()} (${share}% of its score). Each factor is scaled to 0 to 1 first, so no single unit dominates.`;
       readout(document.getElementById("ro-news"), [["#1", top.d.id], ["biggest factor", main.label]], why);
     }
   }
@@ -708,6 +710,7 @@ function initSignalsLogLab() {
       const why = topDoc && topDoc.doc === "d5"
         ? "A bot (u9) clicked the junk FAQ 30 times, so it gets the top boost. Turn on \"One vote per user\" to count the bot once."
         : !opts.normalize ? `The real fix leads. But searches typed as "ECONNRESET" or " EconnReset " still don't count toward "econnreset". Turn on normalizing.`
+        : !opts.onePerUser ? `The real fix leads, but the bot's 30 clicks still count 30 times (the FAQ is at ${(res.ranked.find((x) => x.doc === "d5") || { boost: 0 }).boost > 0 ? "+" : ""}${(res.ranked.find((x) => x.doc === "d5") || { boost: 0 }).boost}). Turn on "One vote per user".`
         : !opts.negatives ? "Variants are merged now. Two users marked the FAQ \"not helpful\", but that isn't counted yet. Turn on negative signals."
         : "All three fixes are on: one bot can't outvote people, spelling variants count together, and unhelpful pages are pushed down.";
       readout(document.getElementById("ro-sig"), [["events counted", res.used], ["fixes off", off.length ? off.join(", ") : "none"]], why, topDoc && topDoc.doc === "d5" ? "warn" : "");
@@ -739,8 +742,9 @@ function initTreeLab() {
     {
       const why = t > 2
         ? (o > 2 ? `title_bm25 ${t.toFixed(1)} > 2 and overview_bm25 ${o.toFixed(1)} > 2: title and overview agree, so this tree gives its top score, 12.` : `Title matches (${t.toFixed(1)} > 2) but the overview doesn't back it up (${o.toFixed(1)} ≤ 2), so only 7.`)
-        : (o > 10 ? `Weak title (${t.toFixed(1)} ≤ 2), but a very strong overview (${o.toFixed(1)} > 10) still earns 8.` : `Weak title and weak overview: 1, pushed to the bottom.`);
-      readout(document.getElementById("ro-tree"), [["path", leaf.path.slice(1).join(" → ")], ["leaf", leaf.score]], `${why} A tree learns these "if" rules, which is how it captures combinations a single weight can't.`);
+        : (o > 10 ? `Weak title (${t.toFixed(1)} ≤ 2), but a very strong overview (${o.toFixed(1)} > 10) still earns 8.` : `Weak title (${t.toFixed(1)} ≤ 2) and an overview that isn't above 10 (${o.toFixed(1)}): 1, pushed to the bottom.`);
+      const pathTxt = t > 2 ? `title > 2: yes → overview > 2: ${o > 2 ? "yes" : "no"}` : `title > 2: no → overview > 10: ${o > 10 ? "yes" : "no"}`;
+      readout(document.getElementById("ro-tree"), [["path", pathTxt], ["leaf", leaf.score]], `${why} A tree learns these "if" rules, which is how it captures combinations a single weight can't.`);
     }
   }
   [slT, slO].forEach((sl) => sl.addEventListener("input", render));
@@ -1051,7 +1055,7 @@ function initChunkLab(getTokens, prepCanvas, redrawCallbacks) {
     const maxCos = Math.max(...chunks.map((ch) => Math.max(0, ch.cos)));
     list.innerHTML = chunks.map((ch) => {
       const isBest = ch === best;
-      const label = ch.part.length === 1 ? ch.part[0].t : `sentences ${ch.from + 1}–${ch.from + ch.part.length}`;
+      const label = ch.part.length === 1 ? ch.part[0].t : `sentences ${ch.from + 1} to ${ch.from + ch.part.length}`;
       const onCount = ch.part.filter((p) => p.on).length;
       return `
         <div class="doc-row${isBest ? " top-hit" : ""}">
@@ -1127,7 +1131,7 @@ function initCutoffLab(getTokens, prepCanvas, redrawCallbacks) {
     callout(ctx, T, f.x(tau), f.top + f.plotH * 0.52, `τ = ${tau.toFixed(2)} · right side passes`, T.amber, P);
 
     const [A, B] = CUTOFF_QUERIES.map((qo) => cutoffStats(qo, tau));
-    const pr = (s) => `P ${s.precision === null ? "—" : `${Math.round(s.precision * 100)}%`} · R ${Math.round(s.recall * 100)}%`;
+    const pr = (s) => `P ${s.precision === null ? "n/a" : `${Math.round(s.precision * 100)}%`} · R ${Math.round(s.recall * 100)}%`;
     const aGood = A.recall === 1 && A.irrPass === 0;
     const bGood = B.recall === 1 && B.irrPass === 0;
     let why;
@@ -1178,7 +1182,7 @@ function initMetricsLab() {
     const m = mxMetrics(rel, k);
     const rows = [
       ["Precision@" + k, m.precision, "of the shown results, share that are good"],
-      ["Recall@" + k, m.recall, "of all 5 good pages, share that are shown"],
+      ["Recall@" + k, m.recall, `of all ${Math.max(MX_TOTAL_GOOD, rel.reduce((x, y) => x + y, 0))} good pages, share that are shown`],
       ["MRR", m.mrr, "1 ÷ rank of the first good result (0 if past k)"],
       ["NDCG@" + k, m.ndcg, "good results, discounted by position"],
     ];

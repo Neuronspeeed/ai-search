@@ -73,7 +73,7 @@ function initQueryCosLab(getTokens, prepCanvas, redrawCallbacks) {
         const y0 = 8 + gi * gh;
         ctx.font = `600 11px ${T.mono}`; ctx.fillStyle = T.fg; ctx.textAlign = "left"; ctx.textBaseline = "top";
         ctx.fillText(g.name, 8, y0);
-        const winner = g.vals[0] === g.vals[1] ? -1 : g.vals[0] > g.vals[1] ? 0 : 1;
+        const winner = Math.abs(g.vals[0] - g.vals[1]) < 1e-9 ? -1 : g.vals[0] > g.vals[1] ? 0 : 1; // float-safe tie
         g.vals.forEach((v, i) => {
           const y = y0 + 24 + i * 30, bw = Math.max(2, ((w - l - rr) * v) / g.max);
           ctx.fillStyle = T.muted; ctx.font = `11px ${T.mono}`; ctx.textBaseline = "middle";
@@ -86,13 +86,13 @@ function initQueryCosLab(getTokens, prepCanvas, redrawCallbacks) {
       });
     }
 
-    const first = (a, b) => (a === b ? "a tie" : a > b ? "Doc 1" : "Doc 2");
+    const first = (a, b) => (Math.abs(a - b) < 1e-9 ? "a tie" : a > b ? "Doc 1" : "Doc 2");
     const cosWin = first(r1.cos, r2.cos), dotWin = first(r1.dot, r2.dot);
     const agree = cosWin === dotWin;
     readout(document.getElementById("ro-qcos"),
       [["Doc 1", `cos ${r1.cos.toFixed(2)} · dot ${r1.dot}`], ["Doc 2", `cos ${r2.cos.toFixed(2)} · dot ${r2.dot}`]],
-      agree ? `Both measures rank ${cosWin} first.`
-        : cosWin === "a tie" ? `Cosine calls it a tie (both point exactly along the query), but the dot product ranks ${dotWin} first because it repeats the words more.`
+      agree ? (cosWin === "a tie" ? "Both measures call it a tie." : `Both measures rank ${cosWin} first.`)
+        : cosWin === "a tie" ? `Cosine calls it a tie (both sit at the same angle to the query), but the dot product ranks ${dotWin} first because it repeats the words more.`
         : `They disagree: cosine ranks ${cosWin} first (closest to the query's direction), the dot product ranks ${dotWin} first (more repeats). Repetition winning is the same problem BM25 caps with k₁.`,
       agree ? "" : "warn");
   }
@@ -161,7 +161,7 @@ function initTwoSearchLab(getTokens, prepCanvas, redrawCallbacks) {
     readout(document.getElementById("ro-boost2"), [["w", w.toFixed(2)], ["plus", plusAgree ? "searches agree" : "searches disagree"], ["times", timesAgree ? "searches agree" : "searches disagree"]],
       !plusAgree
         ? `Same two pages, same boost, but "plus" picks ${pr} for ECONNRESET and ${pc} for connection. The added ${(w * 0.9).toFixed(2)} points are small next to ECONNRESET's big scores and huge next to connection's tiny ones. "Times" scales with each search, so both searches agree.`
-        : `Both modes agree at this weight. Drag w and watch the dashed red line (plus · connection) cross the tie line long before the solid one does.`,
+        : `Both modes agree at this weight. Drag w past about 0.43 and watch the dashed red line (plus · connection) cross the tie line, while the solid one (plus · ECONNRESET) stays above it.`,
       plusAgree ? "" : "warn");
   }
 

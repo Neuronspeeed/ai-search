@@ -662,10 +662,11 @@ function evalFunnel() {
       any: `OR lets in any page with at least one of your words: ${n} page${n === 1 ? "" : "s"}. Loose matching, and the ranking step sorts out the weak ones.`,
       all: `AND needs every word: ${n} page${n === 1 ? "" : "s"}. A page missing even one word is gone, even if it's relevant.`,
       mm: `Min match needs ${mmNeed} of ${tokens.length} words: ${n} page${n === 1 ? "" : "s"}. The middle ground between AND and OR.`,
-      phrase: n === 0 ? "No page has these words in this exact order, so a strict phrase rule returns nothing. That's why phrases work better as a boost." : `Only ${n} page${n === 1 ? "" : "s"} have the exact phrase.`,
+      phrase: n === 0 ? "No page has these words in this exact order, so a strict phrase rule returns nothing. That's why phrases work better as a boost." : `Only ${n} page${n === 1 ? " has" : "s have"} the exact phrase.`,
     }[funnelMatchMode];
+    const ruleOut = tokens.length ? ruleTxt : "No searchable words left after analysis, so nothing matches. Type a query.";
     const filt = filtered.length ? ` The category filter then removed ${filtered.length} matching page${filtered.length === 1 ? "" : "s"} without touching any score.` : "";
-    readout(document.getElementById("ro-funnel"), [["rule", funnelMatchMode === "mm" ? `mm ≥ ${mmNeed}` : funnelMatchMode.toUpperCase()], ["text matches", n], ["after filter", matched.length]], ruleTxt + filt);
+    readout(document.getElementById("ro-funnel"), [["rule", funnelMatchMode === "mm" ? `mm ≥ ${mmNeed}` : funnelMatchMode.toUpperCase()], ["text matches", n], ["after filter", matched.length]], ruleOut + filt);
   }
 
   // Render live doc list
@@ -760,7 +761,11 @@ function evalFunnel() {
   });
 }
 
-funnelQuery.addEventListener("input", evalFunnel);
+funnelQuery.addEventListener("input", () => {
+  document.querySelectorAll("[data-funnel-query]").forEach((b) => b.classList.toggle("active", b.dataset.funnelQuery === funnelQuery.value));
+  syncAllAriaPressed();
+  evalFunnel();
+});
 filterDocsOnly.addEventListener("change", evalFunnel);
 document.querySelectorAll("[data-match-mode]").forEach((btn) => {
   btn.addEventListener("click", () => {

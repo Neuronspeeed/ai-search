@@ -61,7 +61,11 @@ export function initExtraLabs({ getTokens, prepCanvas, redrawCallbacks }) {
       kpiTop.className = `kpi-val ${hijacked ? "coral" : "brand"}`;
     }
     const kpiMode = document.getElementById("kpi-pers-mode");
-    if (kpiMode) kpiMode.textContent = profile.cold ? "BM25 Fallback" : guardrailOn ? "Guarded CF" : "Unguarded CF";
+    if (kpiMode) {
+      kpiMode.textContent = profile.cold ? "BM25 Fallback" : guardrailOn ? "Guarded CF" : "Unguarded CF";
+      const sub = kpiMode.nextElementSibling;
+      if (sub) sub.textContent = profile.cold ? "No history to use yet" : guardrailOn ? "Protects specific queries" : "History can hijack any query";
+    }
 
     persListEl.innerHTML = scored
       .map((d, idx) => {
@@ -162,6 +166,13 @@ export function initExtraLabs({ getTokens, prepCanvas, redrawCallbacks }) {
     setLtrWeights(w);
   }
 
+  function ltrInversions(w) {
+    const sc = LTR_DOCS.map((d) => ({ rel: d.rel, s: w.reduce((t, wi, k) => t + wi * d.f[k], 0) }));
+    let n = 0;
+    for (const a of sc) for (const b of sc) if (a.rel > b.rel && a.s <= b.s) n++;
+    return n;
+  }
+
   function renderLtrLab() {
     if (!ltrListEl || !slLtrTitle) return;
     const w = getLtrWeights();
@@ -223,7 +234,11 @@ export function initExtraLabs({ getTokens, prepCanvas, redrawCallbacks }) {
       if (act === "reset") setLtrWeights([0.15, 1.4, 0.1, 0.1]);
       else if (act === "step") trainPairwiseStep();
       else if (act === "converge") {
-        for (let t = 0; t < 16; t++) trainPairwiseStep();
+        // at least 16 steps, then keep going until no pair is misordered (capped)
+        for (let t = 0; t < 80; t++) {
+          trainPairwiseStep();
+          if (t >= 15 && ltrInversions(getLtrWeights()) === 0) break;
+        }
       }
       renderLtrLab();
     });
@@ -381,11 +396,19 @@ export function initExtraLabs({ getTokens, prepCanvas, redrawCallbacks }) {
     }).join("");
 
     qaAnswerEl.className = `rag-status ${abstain ? "abstain" : ""}`;
+    // small scores need more digits, or a real span score would print as 0.00
+    const fmtP = (v) => (v > 0 && v < 0.01 ? v.toFixed(4) : v.toFixed(2));
     if (abstain) {
-      qaAnswerEl.innerHTML = `<strong>[CLS] ABSTAIN (null score ${nullScore.toFixed(2)} &gt; best span ${bestScore.toFixed(2)}):</strong> Query "${escapeHtml(data.query)}" is unanswerable from this passage.`;
+      const why = qaPreset === "answerable"
+        ? "The passage does answer this question, but the null probability is set so high that [CLS] wins anyway."
+        : "The passage does not answer this question, so no span beats [CLS].";
+      qaAnswerEl.innerHTML = `<strong>[CLS] ABSTAIN (null score ${fmtP(nullScore)} &gt; best span ${fmtP(bestScore)}):</strong> The model answers "not found" for "${escapeHtml(data.query)}". ${why}`;
     } else {
       const spanText = QA_PASSAGE.slice(bestI, bestJ + 1).join(" ");
-      qaAnswerEl.innerHTML = `<strong>EXTRACTED SPAN (P_start × P_end = ${bestScore.toFixed(2)} &gt; null score ${nullScore.toFixed(2)}):</strong> "${escapeHtml(spanText)}"`;
+      const warn = qaPreset === "unanswerable"
+        ? " Wrong answer: with the null probability this low, even a weak span beats [CLS], so the model answers a question the passage cannot answer."
+        : "";
+      qaAnswerEl.innerHTML = `<strong>EXTRACTED SPAN (P_start × P_end = ${fmtP(bestScore)} ≥ null score ${fmtP(nullScore)}):</strong> "${escapeHtml(spanText)}"${warn}`;
     }
   }
 

@@ -234,7 +234,7 @@ function primSmall({ getTokens, prepCanvas, redrawCallbacks }) {
     handle(ctx, T, f.x(n), f.y(raw(n)), T.coral, 5);
     handle(ctx, T, f.x(n), f.y(smooth(n)), T.brand, 5);
     readout(document.getElementById("prim-small-ro"), [["views", n], ["clicks", cum[n - 1]], ["raw rate", pct(raw(n))], ["smoothed", pct(smooth(n))]],
-      n < 15 ? `With ${n} views the raw rate says ${pct(raw(n))}. The smoothed guess stays near the 25% prior until more evidence arrives.` :
+      n < 15 ? `With ${n} view${n === 1 ? "" : "s"} the raw rate says ${pct(raw(n))}. The smoothed guess stays near the 25% prior until more evidence arrives.` :
       n < 100 ? "Evidence is piling up: the smoothed guess is moving toward the truth while the raw rate still wobbles." :
       "Plenty of views: both lines converge toward the true 40%. Smoothing only matters when data is thin.");
   };

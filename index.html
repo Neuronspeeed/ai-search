@@ -622,7 +622,7 @@
 
         <ul class="explain-list">
           <li><span class="explain-term">Minimum match is the real-world default.</span> Pure AND often returns too little for long queries, and pure OR floods results with one-word matches. Solr calls the setting <code>mm</code>, and Elasticsearch and OpenSearch call it <code>minimum_should_match</code>. It takes a count (<code>2</code>) or a percent (<code>75%</code>).</li>
-          <li><span class="explain-term">Step functions.</span> One rule can change with query length. <code>mm=2&lt;-30% 5&lt;3</code> means: with 1–2 words, all are required; with 3–5 words, up to 30% can be missing (rounded down, so 3 words still need all 3); with 6 or more words, at least 3 must match. Short queries stay strict, long ones get room.</li>
+          <li><span class="explain-term">Step functions.</span> One rule can change with query length. <code>mm=2&lt;-30% 5&lt;3</code> means: with 1 or 2 words, all are required; with 3 to 5 words, up to 30% can be missing (rounded down, so 3 words still need all 3); with 6 or more words, at least 3 must match. Short queries stay strict, long ones get room.</li>
         </ul>
 
         <details class="deriv">
@@ -663,6 +663,8 @@
           TF-IDF multiplies how often a term appears in a document (<span class="tag-primary">TF</span>) by how rare that
           term is across the corpus (<span class="tag-secondary">IDF</span>). Naive
           TF-IDF (raw counts, no length handling) is mostly a teaching exercise now, and two failure modes explain why.
+          (Lucene's older classic scorer already softened repeats with √tf and added a length norm, so the raw version
+          here is the naive baseline.)
         </p>
 
         <div class="ref-table-wrap">
@@ -1028,10 +1030,10 @@
         </p>
 
         <div class="eq-strip">
-          <div class="eq-label">Blended Score (each factor scaled to 0–1 first)</div>
+          <div class="eq-label">Blended Score (each factor scaled to 0 to 1 first)</div>
           <div>$$\text{score}(d) = w_{\text{text}} \cdot \frac{\text{BM25}}{\text{max}} + w_{\text{fresh}} \cdot \frac{1}{1 + \text{days}/7} + w_{\text{near}} \cdot \frac{1}{1 + \text{km}/50} + w_{\text{pop}} \cdot \frac{\log(1+\text{clicks})}{\log(1+\text{max clicks})}$$</div>
           <div class="eq-legend">
-            <span><span class="tag-primary">Scale first</span> = BM25 is unbounded, so put every factor on 0–1</span>
+            <span><span class="tag-primary">Scale first</span> = BM25 is unbounded, so put every factor on a 0 to 1 scale</span>
             <span><span class="tag-amber">Reciprocal decay</span> = a 1-week-old article scores 0.5 on freshness</span>
             <span><span class="tag-secondary">Weights</span> = a simple news blend uses 25% each</span>
           </div>
@@ -1136,9 +1138,9 @@
           <div>$$w(s) = w_t \cdot 2^{-\text{age} / \lambda} \qquad\qquad S_{\text{add}} = S_{\text{BM25}} + w \cdot p(d) \qquad S_{\text{mul}} = S_{\text{BM25}} \cdot (1 + w \cdot p(d))$$</div>
           <div class="eq-legend">
             <span><span class="tag-amber">λ</span> = half-life in days (weight halves every λ days)</span>
-            <span><span class="tag-primary">Additive (+)</span> = fixed bonus, can overpower low BM25 on rare queries</span>
+            <span><span class="tag-primary">Additive (+)</span> = fixed bonus, can overpower a page's weak text match</span>
             <span><span class="tag-secondary">Multiplicative (×)</span> = scales proportionally with text relevance</span>
-            <span><span class="tag-coral">p(d)</span> = popularity: log-scaled, decayed clicks on a 0–1 scale</span>
+            <span><span class="tag-coral">p(d)</span> = popularity: log-scaled, decayed clicks on a 0 to 1 scale</span>
           </div>
         </div>
 
@@ -1586,13 +1588,13 @@
           <div class="canvas-wrap framed">
             <canvas id="canvas-kg" class="viz kg interactive" tabindex="0" role="application" aria-label="Knowledge graph. The center word is linked to its most related words; line thickness is the relatedness score. Click a word, or use arrow keys and Enter, to hop to it. Backspace goes back."></canvas>
           </div>
-          <p class="lab-legend">Line thickness and the number on each line = relatedness (−1 to +1), computed live from a toy forum of 4,000 posts. Colors are topics: <span class="t-brand">network errors</span>, <span class="t-blue">databases</span>, <span class="t-amber">golf</span>, <span class="t-coral">rideshare</span>, and gray for billing. Only words seen in at least 5 posts with relatedness ≥ 0.2 are drawn. Dashed lines are the second hop.</p>
+          <p class="lab-legend">Line thickness and the number on each line = relatedness (−1 to +1), computed live from a toy forum of 4,000 posts. Colors are topics: <span class="t-brand">network errors</span>, <span class="t-blue">databases</span>, <span class="t-amber">golf</span>, <span class="t-coral">rideshare</span>, and gray for billing or for words with no topic (like "the"). A word with several meanings takes the color of its most common topic. Only words seen in at least 5 posts with relatedness ≥ 0.2 are drawn. Dashed lines are the second hop.</p>
           <span class="sr-only" id="kg-live" aria-live="polite"></span>
           <div class="readout lab-readout" id="ro-kg" aria-live="polite"></div>
         </div>
 
         <ol class="walkthrough">
-          <li><strong>Start on "econnreset".</strong> Every neighbor is a network-error word (socket, retry, keepalive…), each above +0.9. Words like "the" never appear: they are in almost every post, so their relatedness is about 0.</li>
+          <li><strong>Start on "econnreset".</strong> Every neighbor is a network-error word (socket, retry, keepalive…), each above +0.9. Words like "the" never appear: they are in almost every post, so their relatedness stays near 0 (about −0.3 here, just chance noise), below the 0.2 cutoff.</li>
           <li><strong>Click "driver (3 meanings)".</strong> Its neighbors come from databases, golf, and rideshare at once. Expanding "driver" into all of them would send a database search to golf pages.</li>
           <li><strong>Tick "Show hop 2".</strong> Each branch now uses only the posts that contain both words. From "postgres" the second hop stays in databases, from "tee" it stays in golf. That is the two-level traversal: pick the meaning first, then expand.</li>
           <li><strong>Click any neighbor to hop to it, and "Back" to return.</strong> The path above the graph shows your walk. Every edge is recomputed for the new center.</li>
@@ -1671,7 +1673,7 @@
             <div class="kpi">
               <span class="kpi-label">Wrong Fixes</span>
               <span class="kpi-val coral" id="kpi-spell-wrong">0</span>
-              <span class="kpi-sub">A real word got "corrected"</span>
+              <span class="kpi-sub">A real word changed, or a typo fixed to a typo</span>
             </div>
             <div class="kpi">
               <span class="kpi-label">Missed Typos</span>
@@ -1685,14 +1687,14 @@
           <li><strong>Start (0.55 / 0.65, scaled by length).</strong> 9 typos get fixed and nothing goes wrong. The real word <code>pull</code> is a typo candidate, but it is left alone. Both <code>idempotent</code> typos are missed, because <code>idempotent</code> (210 users) is below the correction cutoff.</li>
           <li><strong>Lower the correction cutoff to 0.60.</strong> <code>idempotent</code> becomes a correction, and both of its typos get fixed: 11 right.</li>
           <li><strong>Click "Flat: up to 2 edits".</strong> Swapped letters (<code>tiemout</code>, <code>retyr</code>) count as 2 edits under plain Levenshtein distance (Damerau distance would count a swap as 1), so now they get fixed too. But the real word <code>pull</code> becomes <code>pool</code>. That is why short words get only 1 edit.</li>
-          <li><strong>Go back to "Scaled by length" and raise the typo cutoff to 0.60.</strong> <code>timout</code> (48 users) is now rare enough to count as a typo and gets fixed. Push the cutoff much higher and more common words get labeled typo candidates, which raises the risk of "fixing" real words.</li>
+          <li><strong>Go back to "Scaled by length" and raise the typo cutoff to 0.60.</strong> <code>timout</code> (48 users) is now rare enough to count as a typo and gets fixed: 12 right. On a big log, pushing the typo cutoff much higher labels common real words as typo candidates, which raises the risk of "fixing" them. In this small log the other side breaks first: set the cutoffs to 0.35 / 0.40 and the typo <code>timout</code> becomes a "correction", so <code>tiemout</code> gets mapped to another typo.</li>
         </ol>
 
         <div class="takeaway">
           <div class="takeaway-copy">
             <div class="takeaway-tag">■ Takeaway · Next §5</div>
             <p class="takeaway-text">
-              Intersecting postings lists in your inverted index surfaces synonyms and disambiguates words like
+              Comparing document sets in your own index surfaces related terms and disambiguates words like
               <code>driver</code> without hand-building an ontology. Next: turning clicks into fair labels.
             </p>
           </div>
@@ -1724,7 +1726,7 @@
           <div class="eq-legend">
             <span><span class="tag-primary">E=1</span> = examined (all ranks ≤ last click)</span>
             <span><span class="tag-coral">Skip</span> = examined but unclicked (negative label)</span>
-            <span><span class="tag-amber">W = α₀ + β₀</span> = prior confidence weight (50–100)</span>
+            <span><span class="tag-amber">W = α₀ + β₀</span> = prior confidence weight (the demo starts at 50; in practice, fit the prior to your own judgments)</span>
           </div>
         </div>
 
@@ -1882,6 +1884,7 @@
               <span class="kpi-sub">Higher power than A/B</span>
             </div>
           </div>
+          <p class="lab-legend">Each query shows only the top 2 slots: #1 is always seen, #2 is seen 60% of the time. Docs are ranked by a smoothed click rate, (clicks + 1) ÷ (impressions + 4), so the unseen d9 starts at 25% and sits at #3. Greedy ranks by that rate alone, so d9 never gets shown. Active learning adds an exploration bonus, √(1.8 ÷ (impressions + 1)), that is large for docs with little data, so d9 gets tried, earns clicks, and climbs.</p>
         </div>
 
         <div class="takeaway">
@@ -1905,7 +1908,7 @@
         <p class="prose">
           Hand-tuning boost weights gets brittle once you have dozens of features (BM25 per field, recency, authority,
           personalization). Learning to Rank (LTR) trains a model such as LambdaMART on query-document feature vectors to
-          rerank the top 500 lexical candidates.
+          rerank the top few hundred lexical candidates (for example, the top 500).
         </p>
 
         <div class="ref-table-wrap">
@@ -1945,7 +1948,7 @@
             </p>
             <p>
               <strong>Query-level data splitting:</strong> Partition labeled datasets strictly by
-              <code>qid</code> (75% train, 20% test, 5% holdout) so the same query's documents never appear in both train and test. To keep
+              <code>qid</code> (for example 75% train, 20% test, 5% holdout) so the same query's documents never appear in both train and test. To keep
               paraphrases from leaking too, group near-duplicate queries before splitting.
             </p>
           </div>
@@ -2037,7 +2040,7 @@
             <div class="kpi">
               <span class="kpi-label">Split Policy</span>
               <span class="kpi-val blue">75 / 20 / 5</span>
-              <span class="kpi-sub">Grouped strictly by qid</span>
+              <span class="kpi-sub">Example split, grouped by qid</span>
             </div>
           </div>
         </div>
@@ -2179,7 +2182,7 @@
               <tr><th>Architecture</th><th>How It Scores</th><th>Where It Fits</th></tr>
             </thead>
             <tbody>
-              <tr><td><code>Bi-Encoder</code></td><td>Encodes query and doc separately, compares via dot product</td><td>Stage 1 retrieval over millions of docs (sub-20ms)</td></tr>
+              <tr><td><code>Bi-Encoder</code></td><td>Encodes query and doc separately, compares via dot product</td><td>Stage 1 retrieval over millions of docs (milliseconds with an ANN index, §9)</td></tr>
               <tr><td><code>Cross-Encoder</code></td><td>Feeds <code>[CLS] query [SEP] doc [SEP]</code> into full joint attention</td><td>Stage 2 reranking of the top tens to hundreds of candidates (too slow to run on everything)</td></tr>
             </tbody>
           </table>
@@ -2369,8 +2372,8 @@
           <li><span class="explain-term">They rank; they don't match.</span> Every document gets a similarity score, even a useless one. There's no natural line between "relevant" and "not", and finding a cutoff is a well-known weakness of embedding models. That's why filters and query understanding (§1, §4) still decide what is eligible.</li>
           <li><span class="explain-term">Semantic drift.</span> For example, a vector search for <code>"The Hobbit"</code> finds <em>The Hobbit: An Unexpected Journey</em> and other Middle-earth titles, which is great. But it also pulls in Harry Potter, which shares the "wizards and magic" neighborhood. Lexical search fails differently: it matched only the word <code>the</code> once the hobbit pages ran out. Hybrid search (§8) uses each to cover the other.</li>
           <li><span class="explain-term">Numbers break embeddings.</span> Models learn a meaning for each token, not a number line. The vector for <code>2</code> isn't reliably closer to <code>3</code> than to <code>10</code>, so similarity between numbers is "spiky". Put prices, sizes, and versions in real fields and use range filters or a separate numeric feature.</li>
-          <li><span class="explain-term">Dimensions aren't human-readable.</span> Toy examples (like Demo 7.3) label each axis with a concept. Real 768-d embeddings spread each concept across many dimensions, which is how a few hundred numbers can hold millions of concepts.</li>
-          <li><span class="explain-term">Vectors can be added and averaged.</span> Because meaning is position, the midpoint of two vectors lands near things that share both. Example: average a photo of a puppy with a photo of Darth Vader, and the nearest image is a puppy in a Darth Vader costume. Average a sporty car <em>photo</em> with the <em>text</em> "superhero" (in a shared image–text space like CLIP), and you find a superhero on a sporty car.</li>
+          <li><span class="explain-term">Dimensions aren't human-readable.</span> Toy examples (like the hand-made vectors behind Demo 7.3) give each axis one concept. Real 768-d embeddings spread each concept across many dimensions, which is how a few hundred numbers can hold millions of concepts.</li>
+          <li><span class="explain-term">Vectors can be added and averaged.</span> Because meaning is position, the midpoint of two vectors lands near things that share both. Example: average a photo of a puppy with a photo of Darth Vader, and the nearest image is a puppy in a Darth Vader costume. Average a sporty car <em>photo</em> with the <em>text</em> "superhero" (in a shared image and text space like CLIP), and you find a superhero on a sporty car.</li>
         </ul>
 
         <!-- DEMO: BLENDING CONCEPTS -->
@@ -2455,7 +2458,7 @@
 
         <ul class="explain-list">
           <li><span class="explain-term">Reciprocal rank fusion (RRF).</span> Uses only each page's place in each list. Agreement across lists beats a page that tops only one.</li>
-          <li><span class="explain-term">Relative score fusion (RSF).</span> Rescales each list's scores to 0–1, then takes a weighted average. The catch: the last page in each list always scores 0, however close it was.</li>
+          <li><span class="explain-term">Relative score fusion (RSF).</span> Rescales each list's scores to 0 to 1, then takes a weighted average. The catch: the last page in each list always scores 0, however close it was.</li>
           <li><span class="explain-term">Match first, rerank second.</span> The lexical match (the AND/OR lookup in the inverted index, §1) decides which pages qualify. BM25 then scores those pages, and a vector score or cross-encoder can reorder them. BM25 is the scoring step after matching, not the matching step itself.</li>
         </ul>
 
@@ -2543,8 +2546,8 @@
 
         <ol class="walkthrough">
           <li><strong>Start on "Outlier BM25 spike" (k = 60, w = 50%).</strong> RRF crowns "Fixing ECONNRESET" because #2 in BM25 plus #1 in Vector beats #1 plus #4. RSF crowns "Stuffed FAQ" because its raw BM25 spike (14.2 vs 5.4) dominates min-max scaling.</li>
-          <li><strong>Lower RSF weight w to 0.25.</strong> Now vector similarity drives RSF and both lists agree on "Fixing ECONNRESET".</li>
-          <li><strong>Click "Consensus win" and drop RRF k to 1.</strong> At k = 1, first place counts far more than second place, shifting the RRF leader.</li>
+          <li><strong>Lower RSF weight w to 0.25.</strong> Now vector similarity drives RSF, and RRF and RSF agree on "Fixing ECONNRESET".</li>
+          <li><strong>Click "Consensus win" and drop RRF k to 1.</strong> At k = 1, first place counts far more than second place, so the RRF leader shifts to "Keep-Alive &amp; Pools" (#1 in BM25, #4 in Vector). RSF still picks "Fixing ECONNRESET".</li>
           <li><strong>Click "A page only one list finds" and set k back to 60.</strong> "Connection Resets" is #1 in the vector list, but BM25 never found it: the page says "connection reset", not "ECONNRESET". With one vote instead of two, RRF ranks it only #6.</li>
           <li><strong>Drop k to 1.</strong> Its single first place now counts much more, and it climbs to #4 (tied with Changelog 2.4).</li>
           <li><strong>Lower the RSF weight w to 0.10.</strong> RSF now trusts the vector scores, and Connection Resets takes #1 in RSF. Rescuing pages like this is why hybrid search exists; k and w decide how hard it tries.</li>
@@ -2571,15 +2574,15 @@
 
         <p class="prose">
           Storing 1 million 1536-dimensional FP32 vectors takes about 6 GB of RAM. Modern vector stacks combine
-          Matryoshka Representation Learning (MRL), quantization, and two-stage rescoring to cut memory by 20× to 100×
-          with minimal recall loss.
+          quantization with two-stage rescoring (and sometimes Matryoshka Representation Learning, MRL) to cut memory
+          by 20× to 100× with small recall loss.
         </p>
 
         <h3>Finding neighbors fast: HNSW and IVF</h3>
         <ul class="explain-list">
           <li><span class="explain-term">HNSW (Hierarchical Navigable Small World).</span> A multi-layer proximity graph where upper layers hold long-range skip edges and the bottom layer holds dense local links, routing greedily in <code>O(log N)</code> hops.</li>
           <li><span class="explain-term">IVF (Inverted File Index).</span> Partitions vector space into Voronoi cells around k-means centroids (<code>nlist</code>). At query time you scan only the nearest <code>nprobe</code> cells.</li>
-          <li><span class="explain-term">Quantization plus over-request and rescore.</span> Int8 scalar quantization cuts RAM by 75% with &gt;92% recall; Product Quantization (PQ) compresses even further into sub-vector codebooks. Over-requesting top 50 quantized candidates and rescoring them with full FP32 vectors recovers almost all lost recall; a cross-encoder can then rerank the survivors for relevance. Some newer embedding models ship int8 vectors trained for it, which can be close to lossless compared with FP32.</li>
+          <li><span class="explain-term">Quantization plus over-request and rescore.</span> Int8 scalar quantization cuts RAM by 75% with &gt;92% recall; Product Quantization (PQ) compresses even further into sub-vector codebooks. Over-requesting top 50 quantized candidates and rescoring them with full FP32 vectors recovers most of the lost recall; a cross-encoder can then rerank the survivors for relevance. Some newer embedding models ship int8 vectors trained for it, which can be close to lossless compared with FP32.</li>
         </ul>
 
         <div class="lab" id="lab-dense">
@@ -2658,7 +2661,7 @@
             </div>
             <div class="kpi">
               <span class="kpi-label">Vector Memory</span>
-              <span class="kpi-val blue" id="kpi-dense-mem">25% (Int8)</span>
+              <span class="kpi-val blue" id="kpi-dense-mem"><span class="was">100%</span><span class="arrow">→</span>25%</span>
               <span class="kpi-sub">FP32 vs. SQ8 footprint</span>
             </div>
             <div class="kpi">
@@ -2671,7 +2674,7 @@
 
         <h3>Smaller vectors: Matryoshka and binary</h3>
         <ul class="explain-list">
-          <li><span class="explain-term">Matryoshka Representation Learning (MRL).</span> Trains embeddings so the most important information sits in the earliest dimensions. If the model was trained with MRL, you can slice a 1536d vector down to its first 256d prefix without retraining. It only works on MRL-trained models, and raw recall falls fast as you cut. In one test, halving the dimensions kept 70% recall, a quarter kept 48%, and an eighth kept 24%. Reranking the candidates with full vectors won most of it back. Most engines also fix the vector size in the schema, so slicing at <em>query</em> time usually isn't possible. In production, MRL is often more of a parlor trick: binary quantization plus reranking usually gives better trade-offs.</li>
+          <li><span class="explain-term">Matryoshka Representation Learning (MRL).</span> Trains embeddings so the most important information sits in the earliest dimensions. If the model was trained with MRL, you can slice a 1536d vector down to its first 256d prefix without retraining. It only works on MRL-trained models, and raw recall falls fast as you cut. In one test, halving the dimensions kept 70% recall, a quarter kept 48%, and an eighth kept 24%. Reranking the candidates with full vectors won most of it back. Most engines also fix the vector size in the schema, so slicing at <em>query</em> time usually isn't possible. In production, MRL is often more of a parlor trick: binary quantization plus reranking often gives better trade-offs.</li>
           <li><span class="explain-term">Binary quantization (1-bit).</span> Converts every float to <code>0</code> or <code>1</code> (32× smaller than FP32) and scores with hardware XOR + popcount (Hamming distance). The demo below scores a full-precision query against the 1-bit vectors (asymmetric scoring), which engines also offer.</li>
         </ul>
 
@@ -2692,7 +2695,7 @@
               <tr><td><code>Binary, naive</code></td><td>1 bit per number: positive → 1, negative → 0</td><td>Lowest quality of the binary options</td></tr>
               <tr><td><code>Binary, tuned thresholds</code></td><td>Learn a better cutoff per dimension from your own data</td><td>Keeps much more detail at the same size</td></tr>
               <tr><td><code>Binary, model-native</code></td><td>The model was trained to output bits directly</td><td>Best: a model trained for quantization beats quantizing afterwards</td></tr>
-              <tr><td><code>Product (PQ)</code></td><td>Split the vector into M pieces; replace each piece with the ID of its nearest centroid (a lookup table of 256 per piece)</td><td>Can go below 1 bit per dimension, but it's slower than binary. Prefer binary unless you need PQ's size</td></tr>
+              <tr><td><code>Product (PQ)</code></td><td>Split the vector into M pieces; replace each piece with the ID of its nearest centroid (often a lookup table of 256 per piece; the demo below uses 4 to 64)</td><td>Can go below 1 bit per dimension, but it's slower than binary. Prefer binary unless you need PQ's size</td></tr>
               <tr><td><code>Rotational</code></td><td>Rotate the space first. Distances don't change, but one huge outlier value gets spread across all dimensions</td><td>Less error at the same bit budget, since one outlier no longer forces a huge range</td></tr>
               <tr><td><code>MRL</code></td><td>Cut off the tail dimensions (only on MRL-trained models)</td><td>More of a parlor trick than a production tool (see above)</td></tr>
             </tbody>
@@ -2790,7 +2793,7 @@
           <div class="kpi-strip">
             <div class="kpi">
               <span class="kpi-label">RAM for 1M × 1,536-dim</span>
-              <span class="kpi-val brand" id="kpi-mrl-mem">1,465 MB</span>
+              <span class="kpi-val brand" id="kpi-mrl-mem"><span class="was">5,859</span><span class="arrow">→</span>1,465 MB</span>
               <span class="kpi-sub">FP32 → this format, in MB</span>
             </div>
             <div class="kpi">
@@ -2811,7 +2814,7 @@
           <li><strong>Click "Binary (1-bit)".</strong> 32× smaller. The stored bars (amber) are now just + or −, and the first pass finds only 45%. Reranking the top 50 with full vectors brings it back to 93%: the fast-pass-then-rerank trick.</li>
           <li><strong>Click "PQ".</strong> Half a bit per number: each chunk of 8 values is replaced by the ID of its nearest codebook entry. That's 64× smaller. The first pass finds 27%, and reranking brings it to 91%.</li>
           <li><strong>Pick FP32 and drag MRL down to 16 dims.</strong> Only the first quarter of each vector is kept. Even without compression, the first pass drops to 57%, and reranking reaches 96%. Earlier dims hold more signal here because these toy vectors are built that way, like an MRL-trained model.</li>
-          <li><strong>Untick "Rerank".</strong> Every format now shows only its first-pass recall. This is why systems keep compressed vectors in RAM and full vectors on disk.</li>
+          <li><strong>Untick "Rerank".</strong> The recall tile now shows only the first pass (57% here); in the chart, the hollow dots are each format's first pass. The gap to the filled dots is why systems keep compressed vectors in RAM and full vectors on disk.</li>
         </ol>
 
         <h3>Why rotation helps: one outlier ruins the scale</h3>
@@ -2858,7 +2861,7 @@
 
           <div class="readout lab-readout" id="ro-spike" aria-live="polite"></div>
           <div class="kpi-strip">
-            <div class="kpi"><span class="kpi-label">Largest |coordinate|</span><span class="kpi-val coral" id="kpi-spike-max">1.00</span><span class="kpi-sub">spike → after rotating</span></div>
+            <div class="kpi"><span class="kpi-label">Largest |coordinate|</span><span class="kpi-val coral" id="kpi-spike-max"><span class="was">1.00</span><span class="arrow">→</span>1.00</span><span class="kpi-sub">spike → after rotating</span></div>
             <div class="kpi"><span class="kpi-label">Length</span><span class="kpi-val blue" id="kpi-spike-len">1.000</span><span class="kpi-sub">Always 1: rotation is exact</span></div>
             <div class="kpi"><span class="kpi-label">Best Possible in 3D</span><span class="kpi-val amber">0.577</span><span class="kpi-sub">every coordinate = 1/√3</span></div>
           </div>
@@ -2912,9 +2915,9 @@
 
           <div class="readout lab-readout" id="ro-rot" aria-live="polite"></div>
           <div class="kpi-strip">
-            <div class="kpi"><span class="kpi-label">Largest |value|</span><span class="kpi-val coral" id="kpi-rot-max">1.60</span><span class="kpi-sub">before → after rotating</span></div>
-            <div class="kpi"><span class="kpi-label">Vector Length</span><span class="kpi-val blue" id="kpi-rot-len">1.730</span><span class="kpi-sub">Unchanged: rotation is exact</span></div>
-            <div class="kpi"><span class="kpi-label">Quantization Error (MSE)</span><span class="kpi-val brand" id="kpi-rot-err">—</span><span class="kpi-sub" id="kpi-rot-err-sub">3.3× less error after rotating</span></div>
+            <div class="kpi"><span class="kpi-label">Largest |value|</span><span class="kpi-val coral" id="kpi-rot-max"><span class="was">1.60</span><span class="arrow">→</span>1.15</span><span class="kpi-sub">before → after rotating</span></div>
+            <div class="kpi"><span class="kpi-label">Vector Length</span><span class="kpi-val blue" id="kpi-rot-len"><span class="was">1.730</span><span class="arrow">→</span>1.730</span><span class="kpi-sub">Unchanged: rotation is exact</span></div>
+            <div class="kpi"><span class="kpi-label">Quantization Error (MSE)</span><span class="kpi-val brand" id="kpi-rot-err"><span class="was">2.2e-2</span><span class="arrow">→</span>6.7e-3</span><span class="kpi-sub" id="kpi-rot-err-sub">3.3× less error after rotating</span></div>
           </div>
         </div>
 
@@ -2922,7 +2925,7 @@
           <li><strong>Start at 3 bits.</strong> On the left, the outlier at dimension 5 stretches the scale, so the small values all snap to the levels nearest zero (amber ticks). On the right, after rotating, no single value is that large, and the ticks track the bars closely.</li>
           <li><strong>Read the tiles.</strong> The largest value shrinks, the length stays exactly the same, and the error drops several times over.</li>
           <li><strong>Click "Draw a fresh rotation" a few times.</strong> Every random rotation helps, some more than others. Engines often use structured fast rotations instead of a full random matrix.</li>
-          <li><strong>Drag the bits up to 6.</strong> With more bits, both get better. Rotation matters most when bits are scarce.</li>
+          <li><strong>Drag the bits up to 6.</strong> With more bits, both errors shrink by more than 50×, so what rotating saves in absolute terms becomes tiny. Rotation matters most when bits are scarce.</li>
         </ol>
 
         <div class="takeaway">
@@ -2951,12 +2954,12 @@
 
         <ul class="explain-list">
           <li><span class="explain-term">Late interaction (ColBERT, ColPali).</span> Stores one contextual vector per token at index time. At query time, each query token finds its single highest dot product across all document tokens (<code>MaxSim</code>), then sums those maximums. ColPali applies the same idea to PDF page image patches.</li>
-          <li><span class="explain-term">Sparse lexical expansion (SPLADE, Doc2Query).</span> SPLADE uses a transformer to predict importance weights across the full vocabulary, expanding short text with synonyms like <code>socket hang up → econnreset, keepalive, tcp</code> so it runs directly inside a fast inverted index. Doc2Query gets a similar effect differently: it generates likely queries and appends them to the document as text.</li>
+          <li><span class="explain-term">Sparse lexical expansion (SPLADE, Doc2Query).</span> SPLADE uses a transformer to predict importance weights across the full vocabulary, expanding short text with synonyms like <code>socket hang up → econnreset, keepalive, tcp</code> so it runs directly inside a fast inverted index. Documents get expanded the same way at index time, so query and document terms can meet. Real SPLADE terms are the model's word pieces, so some expansions are word fragments rather than the clean words in the demo below. Doc2Query gets a similar effect differently: it generates likely queries and appends them to the document as text.</li>
         </ul>
         <details class="deeper">
           <summary>Go deeper · 3 more notes</summary>
           <ul class="explain-list">
-          <li><span class="explain-term">System One (Decision Models) as rerankers.</span> Compact decision models (such as <code>pplx-decider-flash</code>) score query-document relevance fast enough for production reranking, bridging classic cross-encoders and expensive frontier LLMs. Sizes run from about 1.7B up to roughly 21B–31B for the top benchmark scores, and bigger usually does better. Reranking is only one job. Because they pick from a fixed list of answers, they also handle query classification and query understanding, routing (for example, which team gets this message), and fine-tuned domain classifiers. Decision models can replace a lot of what used to need a full LLM, often fast enough even for regular search. Expect hundreds of ms per rerank call, with big swings on hosted APIs.</li>
+          <li><span class="explain-term">System One (Decision Models) as rerankers.</span> Compact decision models (such as <code>pplx-decider-flash</code>) score query-document relevance fast enough for production reranking, bridging classic cross-encoders and expensive frontier LLMs. Sizes run from about 1.7B up to roughly 21B to 31B for the top benchmark scores, and bigger usually does better. Reranking is only one job. Because they pick from a fixed list of answers, they also handle query classification and query understanding, routing (for example, which team gets this message), and fine-tuned domain classifiers. Decision models can replace a lot of what used to need a full LLM, often fast enough even for regular search. Expect hundreds of ms per rerank call, with big swings on hosted APIs.</li>
           <li><span class="explain-term">Why "System One"?</span> The name comes from the two modes of thinking: System 1 is fast and intuitive, System 2 is slow and deliberate. A decision model is built for System 1. It doesn't reason step by step; it picks one answer from a fixed list in a single step. Its confidence comes from the score the model gives each option's token, the same scores an LLM uses to choose its next word. The trade-off: speed and low cost, with a ceiling on accuracy for problems that need real thinking.</li>
           <li><span class="explain-term">Watch the word "pairwise".</span> In LTR (§6), pairwise means comparing doc A against doc B. In reranker APIs, "pairwise" often means scoring one (query, doc) pair per call, and "listwise" means sending all candidates together.</li>
           </ul>
@@ -3147,7 +3150,7 @@
             <div class="stage-pane">
               <div class="pane-head">
                 <span class="pane-title">Ranked Results (Drag or ↑/↓)</span>
-                <span class="pane-badge">rel 0–3</span>
+                <span class="pane-badge">rel 0 to 3</span>
               </div>
               <div class="doc-list" id="ndcg-list"></div>
             </div>
@@ -3187,8 +3190,8 @@
 
         <ul class="explain-list">
           <li><span class="explain-term">Pair NDCG@10 with recall@50 or @100.</span> Recall tells you whether the right docs entered the candidate pool; NDCG@10 tells you whether the final order is good.</li>
-          <li><span class="explain-term">For agents and RAG, order matters less.</span> When an LLM reads the top 10–20 results, it matters much less whether the best one is #1 or #8 (though LLMs still favor some positions in their input). Set-level recall (Recall@20) often tracks answer quality better than NDCG@10. NDCG still matters for ranked lists that people scan.</li>
-          <li><span class="explain-term">Graded vs. pass/fail labels.</span> Simple good/not-good labels are faster to collect and more consistent between raters, and often enough for agent evals. Graded labels (0–3) still matter when you <em>train</em> a ranker like LTR, because it has to learn why one good result beats another.</li>
+          <li><span class="explain-term">For agents and RAG, order matters less.</span> When an LLM reads the top 10 to 20 results, it matters much less whether the best one is #1 or #8 (though LLMs still favor some positions in their input). Set-level recall (Recall@20) often tracks answer quality better than NDCG@10. NDCG still matters for ranked lists that people scan.</li>
+          <li><span class="explain-term">Graded vs. pass/fail labels.</span> Simple good/not-good labels are faster to collect and more consistent between raters, and often enough for agent evals. Graded labels (0 to 3) still matter when you <em>train</em> a ranker like LTR, because it has to learn why one good result beats another.</li>
           <li><span class="explain-term">MRR for one-right-answer search.</span> When each question has one right answer, or labels mark about one relevant passage per query (as in MS MARCO, which reports MRR@10), score each query as <code>1 / rank of the first right answer</code> and average over queries: rank 1 → 1.0, rank 2 → 0.5, rank 4 → 0.25. That's <em>Mean Reciprocal Rank</em>. RAG is different: it wants several useful passages, so recall-style metrics fit it better.</li>
           <li><span class="explain-term">Unjudged docs count as irrelevant.</span> So a new system that surfaces good but never-labeled pages gets penalized unfairly. Check how much of your top 10 is labeled, and check whether your library uses linear gain (<code>rel</code>) or exponential gain (<code>2^rel − 1</code>) before comparing numbers.</li>
         </ul>
@@ -3230,7 +3233,7 @@
             <div>
               <div class="plot-title">ranked results · <span class="t-dim">click to mark good / not good</span></div>
               <div class="mx-list" id="mx-list"></div>
-              <p class="lab-legend">In the presets, the collection has 5 good pages and one is never retrieved, so recall can't reach 100%. Mark extra rows good and they count as part of the collection.</p>
+              <p class="lab-legend">In the presets, the collection has 5 good pages and at least one is never retrieved, so recall can't reach 100%. Mark extra rows good and they count as part of the collection.</p>
             </div>
             <div>
               <div class="plot-title">metrics at k</div>
@@ -3285,18 +3288,18 @@
               <tr><th>Step</th><th>What the User Gets</th><th>Covered On This Page</th></tr>
             </thead>
             <tbody>
-              <tr><td><code>1. Search results</code></td><td>"Ten blue links." Sources only.</td><td>§1–§10</td></tr>
-              <tr><td><code>2. Info boxes</code></td><td>Pre-vetted summary or answer for known entities and questions</td><td>—</td></tr>
+              <tr><td><code>1. Search results</code></td><td>"Ten blue links." Sources only.</td><td>§1 to §11</td></tr>
+              <tr><td><code>2. Info boxes</code></td><td>Pre-vetted summary or answer for known entities and questions</td><td>Not covered</td></tr>
               <tr><td><code>3. Extractive QA</code></td><td>An answer span copied word for word from a source, found in real time</td><td>Demo 12.1</td></tr>
               <tr><td><code>4. Results summarization</code></td><td>Several results rewritten into one short summary, with citations</td><td>RAG (Demo 12.2)</td></tr>
               <tr><td><code>5. Abstractive QA</code></td><td>A new answer written from one or more results; may not match any source's wording</td><td>RAG (Demo 12.2)</td></tr>
-              <tr><td><code>6. New content generation</code></td><td>New prose, code, or images made on the fly from the query</td><td>—</td></tr>
+              <tr><td><code>6. New content generation</code></td><td>New prose, code, or images made on the fly from the query</td><td>Not covered</td></tr>
             </tbody>
           </table>
         </div>
 
         <p class="prose">
-          Steps 4–6 run on <em>foundation models</em>: huge models trained on vast amounts of web text and other data that can then be
+          Steps 4 to 6 run on <em>foundation models</em>: huge models trained on vast amounts of web text and other data that can then be
           adapted to many tasks. Training is a kind of
           <em>lossy compression</em>: it squeezes human knowledge into the model's weights. Facts can be "decompressed" back out,
           but not perfectly. That is why models hallucinate, and why RAG hands them the real source text at answer time.
@@ -3456,9 +3459,9 @@
               <tr><th>Dimension</th><th>Search for Humans</th><th>Search for Agents</th></tr>
             </thead>
             <tbody>
-              <tr><td>Latency budget</td><td>Strict (about 100–200 ms, single pass)</td><td>Looser overall (seconds to minutes across many calls), but each search call must still be fast because it runs many times</td></tr>
+              <tr><td>Latency budget</td><td>Strict (about 100 to 200 ms, single pass)</td><td>Looser overall (seconds to minutes across many calls), but each search call must still be fast because it runs many times</td></tr>
               <tr><td>Top priority</td><td>Top-heavy ranking quality (NDCG@10; the first few links must look right)</td><td>Recall@20 + clean structured chunks + metadata</td></tr>
-              <tr><td>Query style</td><td>Short, ambiguous 2–3 word queries</td><td>Iterative, self-rewriting, tool-filtered queries</td></tr>
+              <tr><td>Query style</td><td>Short, ambiguous queries of 2 or 3 words</td><td>Iterative, self-rewriting, tool-filtered queries</td></tr>
             </tbody>
           </table>
         </div>
@@ -3466,9 +3469,16 @@
         <details class="deeper">
           <summary>Go deeper · 1 more note</summary>
           <ul class="explain-list">
-          <li><span class="explain-term">Video RAG: MomentSearch architecture.</span> Video retrieval indexes two things: overlapping transcript windows and video frames. Frames must be heavily thinned and deduplicated first, because 24–60 nearly identical frames per second flood the index. A query runs three searches at once (BM25 on transcripts, vectors on transcripts, CLIP on frames). The two transcript lists are merged, and <em>only then</em> are speech and frames grouped into timestamped "moments" for reranking, an LLM check, and a timestamped answer. Plain transcripts say <em>what</em> was said and <em>when</em>, but not <em>who</em>. A multimodal LLM can watch the video and mark speaker changes.</li>
+          <li><span class="explain-term">Video RAG: MomentSearch architecture.</span> Video retrieval indexes two things: overlapping transcript windows and video frames. Frames must be heavily thinned and deduplicated first, because video runs at 30 to 60 frames per second and most neighboring frames are nearly identical. A query runs three searches at once (BM25 on transcripts, vectors on transcripts, CLIP on frames). The two transcript lists are merged, and <em>only then</em> are speech and frames grouped into timestamped "moments" for reranking, an LLM check, and a timestamped answer. Plain transcripts say <em>what</em> was said and <em>when</em>, but not <em>who</em>. A multimodal LLM can watch the video and mark speaker changes.</li>
           </ul>
         </details>
+
+        <p class="prose">
+          A <em>semantic cache</em> stores past queries with their answers. When a new query comes in, embed it and look
+          for a cached query that means almost the same thing: cosine similarity above a high cutoff, <span class="math-sym">τ</span>_cache. On a hit, return the
+          stored answer and skip retrieval and the LLM. The risk is a false hit: a query that is close but not the same
+          gets someone else's answer, the way a cache entry for "ipad" should not answer "ipad charger".
+        </p>
 
         <div class="lab" id="lab-cache">
           <div class="lab-header">
@@ -3528,7 +3538,7 @@
 
         <div class="takeaway">
           <div class="takeaway-copy">
-            <div class="takeaway-tag">■ Complete Reference (§0–§13)</div>
+            <div class="takeaway-tag">■ Complete Reference (§0 to §13)</div>
             <p class="takeaway-text">
               This page covered
               inverted indexes, BM25, signals, knowledge graphs, personalization, LTR, click models, active learning,

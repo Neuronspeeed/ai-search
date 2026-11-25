@@ -421,10 +421,12 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
     const allScored = EMBEDDING_POINTS.map((p, idx) => {
       const dist = Math.hypot(p.x - q.x, p.y - q.y);
       const exactSim = Math.max(0.05, 1 - dist * 1.15);
-      const qNoise = useInt8 && !useCross ? ((idx % 2 === 0 ? -1 : 1) * 0.004) : 0; // int8 rounding is tiny
+      const qNoise = useInt8 ? ((idx % 2 === 0 ? -1 : 1) * 0.004) : 0; // int8 rounding is tiny
+      const annSim = Math.min(0.99, Math.max(0.05, exactSim + qNoise)); // stage 1: the vector (ANN) score
+      // stage 2 (toy cross-encoder): reads query + doc together, so it replaces the vector score
       const crossBoost = useCross ? (p.cluster === sortedCentroids[0].id ? 0.06 : -0.04) : 0;
-      const sim = Math.min(0.99, Math.max(0.05, exactSim + qNoise + crossBoost));
-      return { ...p, exactSim, sim, probed: probedSet.has(p.cluster) };
+      const sim = useCross ? Math.min(0.99, Math.max(0.05, exactSim + crossBoost)) : annSim;
+      return { ...p, exactSim, annSim, sim, probed: probedSet.has(p.cluster) };
     });
 
     const exactTop3 = new Set(
@@ -432,7 +434,9 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
     );
     const probedRanked = allScored.filter((d) => d.probed).sort((a, b) => b.sim - a.sim);
     const retrievedTop3 = probedRanked.slice(0, 3);
-    const recallHits = retrievedTop3.filter((d) => exactTop3.has(d.id)).length;
+    // ANN recall is measured on the vector stage, before any rerank: a reranker reorders, it can't fix what IVF missed
+    const annTop3 = allScored.filter((d) => d.probed).sort((a, b) => b.annSim - a.annSim).slice(0, 3);
+    const recallHits = annTop3.filter((d) => exactTop3.has(d.id)).length;
     const recallPct = Math.round((recallHits / 3) * 100);
 
     const baseLatency = nprobe * 4 + (useInt8 ? 2 : 6) + (useCross ? 42 : 0);
@@ -777,7 +781,11 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
             ? `RSF rescales raw scores, so "${f.title}" wins on one outsized BM25 score (${f.bm25} vs ${bm[1]})${wVal > 0.5 ? ", helped by BM25's bigger weight" : ""}.`
             : f.bm25 == null
               ? `RSF follows the scores: with BM25 weighted only ${Math.round(wVal * 100)}%, "${f.title}" wins on its top vector score (${f.vec}) even though BM25 never found it.`
-              : `RSF keeps score margins, so "${f.title}", strong in both lists (BM25 ${f.bm25}, vector ${f.vec}), has the best weighted sum.`;
+              : f.rB <= 2 && f.rV <= 2
+                ? `RSF keeps score margins, so "${f.title}", strong in both lists (BM25 ${f.bm25}, vector ${f.vec}), has the best weighted sum.`
+                : f.partV >= f.partB
+                  ? `RSF follows the scores: with BM25 weighted ${Math.round(wVal * 100)}%, "${f.title}" wins mostly on its vector score (${f.vec}), though it is only ${place(f.rB)} in BM25.`
+                  : `RSF follows the scores: with BM25 weighted ${Math.round(wVal * 100)}%, "${f.title}" wins mostly on its BM25 score (${f.bm25}), though it is only ${place(f.rV)} in vectors.`;
           return `${rrfWhy} ${rsfWhy}`;
         })();
       readout(document.getElementById("ro-hybrid"), [["RRF k", kVal], ["RSF BM25 weight", `${Math.round(wVal * 100)}%`]], why, same ? "" : "warn");

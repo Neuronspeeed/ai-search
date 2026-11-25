@@ -285,7 +285,7 @@ export const QUERY_PIPELINE_PRESETS = {
   top_near: {
     raw: "top redis cache guide",
     tokens: [
-      { text: "top", type: "function", note: "semantic_fn: sort_by_rating" },
+      { text: "top", type: "function", note: "semantic_fn: boost_by_rating" },
       { text: "redis", type: "entity", note: "tech: redis" },
       { text: "cache", type: "keyword", note: "topic: caching" },
       { text: "guide", type: "entity", note: "doc_type: tutorial" },
@@ -298,7 +298,7 @@ export const QUERY_PIPELINE_PRESETS = {
       { term: "pipelining", z: 0.58 },
       { term: "rate limit 429", z: 0.12 },
     ],
-    transformed: 'must:(redis AND cache) filter:(doc_type:tutorial) boost:(mul(helpfulness_score, 2.0))',
+    transformed: 'must:(redis AND cache) filter:(doc_type:tutorial) boost:(mul(rating, 2.0))',
   },
 };
 

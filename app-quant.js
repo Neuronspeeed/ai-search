@@ -319,7 +319,7 @@ function initCompressLab(getTokens, prepCanvas, redrawCallbacks) {
       const what = fmt === "fp32" ? "full 32-bit floats" : fmt === "pq" ? "one codebook ID per 8 numbers (½ bit each)" : `${bits} bit${bits === 1 ? "" : "s"} per number`;
       const mrlTxt = prefix < D ? ` MRL keeps only the first ${prefix} of ${D} dims.` : "";
       const rrTxt = rr
-        ? (r1 - r0 > 0.15 ? ` Reranking the top ${RERANK_POOL} with full vectors from disk wins back most of the loss (${Math.round(r0 * 100)}% → ${Math.round(r1 * 100)}%).` : ` Reranking adds little here: the first pass is already good.`)
+        ? (r1 - r0 > 0.15 ? ` Reranking the top ${RERANK_POOL} with full vectors from disk wins back ${r1 - r0 >= 0.5 * (1 - r0) ? "most" : "part"} of the loss (${Math.round(r0 * 100)}% → ${Math.round(r1 * 100)}%).` : ` Reranking adds little here: the first pass is already good.`)
         : " Turn on reranking to see how much a second pass with full vectors recovers.";
       readout(document.getElementById("ro-mrl"), [["stored as", FORMATS[fmt].label], ["memory", `${(full / mb).toFixed(full / mb < 10 ? 1 : 0)}× smaller`], ["first pass", `${Math.round(r0 * 100)}%`]],
         `Each vector is stored as ${what}.${mrlTxt} The fast first pass still finds ${Math.round(r0 * 100)}% of the exact top-10.${rrTxt}`, r0 < 0.6 && !rr ? "warn" : "");
@@ -380,9 +380,11 @@ function initRotationLab(getTokens, prepCanvas, redrawCallbacks) {
     document.getElementById("kpi-rot-len").innerHTML = `<span class="was">${r.lenBefore.toFixed(3)}</span><span class="arrow">→</span>${r.lenAfter.toFixed(3)}`;
     document.getElementById("kpi-rot-err").innerHTML = `<span class="was">${r.mseBefore.toExponential(1)}</span><span class="arrow">→</span>${r.mseAfter.toExponential(1)}`;
     const ratio = r.mseBefore / Math.max(1e-12, r.mseAfter);
+    const spikeAt = Array.from(r.v, Math.abs).indexOf(r.maxBefore);
+    const smallLevels = new Set(Array.from(r.plainQ).filter((_, i) => i !== spikeAt).map((x) => x.toFixed(6))).size;
     document.getElementById("kpi-rot-err-sub").textContent = ratio >= 1 ? `${ratio.toFixed(1)}× less error after rotating` : "Rotation didn't help this draw";
     readout(document.getElementById("ro-rot"), [["bits", bits], ["levels", 2 ** bits], ["max |x|", `${r.maxBefore.toFixed(2)} → ${r.maxAfter.toFixed(2)}`]],
-      `Before rotating, the outlier (${r.maxBefore.toFixed(2)}) sets the scale, so ${2 ** bits} levels are spread far apart and the small values all land in the middle two. After rotating, the biggest value is ${r.maxAfter.toFixed(2)}, the levels sit ${(r.maxBefore / r.maxAfter).toFixed(1)}× closer together, and the error falls ${ratio.toFixed(1)}×. The length didn't change, so no information was lost.`);
+      `Before rotating, the outlier (${r.maxBefore.toFixed(2)}) sets the scale, so ${2 ** bits} levels are spread far apart and the other ${RD - 1} values share just ${smallLevels} of them. After rotating, the biggest value is ${r.maxAfter.toFixed(2)}, the levels sit ${(r.maxBefore / r.maxAfter).toFixed(1)}× closer together, and the error ${ratio >= 1 ? `falls ${ratio.toFixed(1)}×` : "does not fall on this draw"}. Rotation itself loses nothing: the length didn't change.`);
   }
 
   slBits.addEventListener("input", render);
