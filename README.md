@@ -1,4 +1,4 @@
-# Search Basics, Interactive
+# Search Basics
 
 How a search engine finds pages and puts them in order, explained with live demos you can drag and click:
 inverted indexes and BM25, click signals, knowledge graphs, learning to rank, dense vectors, hybrid fusion,
