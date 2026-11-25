@@ -15,6 +15,7 @@ import { initRebuiltLabs } from "./app-rebuilt.js";
 import { initQuantLabs } from "./app-quant.js";
 import { init3dLabs } from "./app-3d.js";
 import { initGraphLab } from "./app-graph.js";
+import { initRankingLabs } from "./app-ranking.js";
 import { initPrimerLabs } from "./app-primer.js";
 import { readout } from "./chart-kit.js";
 
@@ -815,6 +816,7 @@ initPrimerLabs({ getTokens, prepCanvas, redrawCallbacks });
 initGapCanvasLabs({ getTokens, prepCanvas, redrawCallbacks });
 init3dLabs({ getTokens, prepCanvas, redrawCallbacks });
 initGraphLab({ getTokens, prepCanvas, redrawCallbacks });
+initRankingLabs({ getTokens, prepCanvas, redrawCallbacks });
 syncAllAriaPressed();
 
 // Trigger KaTeX auto-render once deferred script loads

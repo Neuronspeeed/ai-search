@@ -711,8 +711,8 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
           const wV = (d.partV / maxF) * 100;
           const isTrap = !isRrf && hybridScenario === "outlier" && idx === 0 && d.id === "d5";
           const formulaStr = isRrf
-            ? `1/(${kVal}+${d.rB}) + 1/(${kVal}+${d.rV})`
-            : `${wVal.toFixed(2)}·norm(${d.bm25}) + ${(1 - wVal).toFixed(2)}·norm(${d.vec})`;
+            ? `${d.rB ? `1/(${kVal}+${d.rB})` : "0"} + ${d.rV ? `1/(${kVal}+${d.rV})` : "0"}`
+            : `${wVal.toFixed(2)}·${d.bm25 == null ? "0" : `norm(${d.bm25})`} + ${(1 - wVal).toFixed(2)}·${d.vec == null ? "0" : `norm(${d.vec})`}`;
           return `
             <div class="doc-row ${idx === 0 ? "top-hit" : ""}" style="${
               isTrap ? "border-color:var(--sem-coral);background:rgba(251,113,133,0.1)" : ""
@@ -721,8 +721,8 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
               <div class="doc-info">
                 <div class="doc-title">${escapeHtml(d.title)}</div>
                 <div class="doc-meta">
-                  <span>BM25 #${d.rB}</span>
-                  <span>Vec #${d.rV}</span>
+                  <span>BM25 ${d.rB ? `#${d.rB}` : "not found"}</span>
+                  <span>Vec ${d.rV ? `#${d.rV}` : "not found"}</span>
                   <span>${formulaStr}</span>
                 </div>
                 <div class="dual-bar">
@@ -766,15 +766,18 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
       const why = same
         ? `Both agree on "${r.title}". When no list has an extreme score, rank-based and score-based fusion pick the same winner.`
         : (() => {
-          const bm = docs.map((d) => d.bm25).sort((a, b) => b - a);
+          const bm = docs.map((d) => d.bm25).filter((x) => x != null).sort((a, b) => b - a);
+          const place = (x) => (x ? `#${x}` : "not found");
           const outsized = f.bm25 === bm[0] && bm[0] >= 1.8 * bm[1];
           const firstPlace = r.rB === 1 ? "BM25" : r.rV === 1 ? "vector" : null;
           const rrfWhy = kVal < 10 && firstPlace
-            ? `At k = ${kVal}, a first place counts far more than a second, so "${r.title}" (#1 in ${firstPlace}, #${firstPlace === "BM25" ? r.rV : r.rB} in the other list) wins RRF.`
-            : `RRF only looks at positions: "${r.title}" is #${r.rB} in BM25 and #${r.rV} in vectors, the best combined placing.`;
+            ? `At k = ${kVal}, a first place counts far more than a second, so "${r.title}" (#1 in ${firstPlace}, ${place(firstPlace === "BM25" ? r.rV : r.rB)} in the other list) wins RRF.`
+            : `RRF only looks at positions: "${r.title}" is ${place(r.rB)} in BM25 and ${place(r.rV)} in vectors, the best combined placing.`;
           const rsfWhy = outsized
             ? `RSF rescales raw scores, so "${f.title}" wins on one outsized BM25 score (${f.bm25} vs ${bm[1]})${wVal > 0.5 ? ", helped by BM25's bigger weight" : ""}.`
-            : `RSF keeps score margins, so "${f.title}", strong in both lists (BM25 ${f.bm25}, vector ${f.vec}), has the best weighted sum.`;
+            : f.bm25 == null
+              ? `RSF follows the scores: with BM25 weighted only ${Math.round(wVal * 100)}%, "${f.title}" wins on its top vector score (${f.vec}) even though BM25 never found it.`
+              : `RSF keeps score margins, so "${f.title}", strong in both lists (BM25 ${f.bm25}, vector ${f.vec}), has the best weighted sum.`;
           return `${rrfWhy} ${rsfWhy}`;
         })();
       readout(document.getElementById("ro-hybrid"), [["RRF k", kVal], ["RSF BM25 weight", `${Math.round(wVal * 100)}%`]], why, same ? "" : "warn");
@@ -850,8 +853,7 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
             <div class="doc-info">
               <div class="doc-title">${escapeHtml(item.title)}</div>
               <div class="doc-meta">
-                <span>discount: 1/log₂(${idx + 2})</span>
-                <span>gain: ${contribStr}</span>
+                <span>${outside ? `outside top ${k}: adds 0` : `gain ${ndcgGainMode === "exp" ? 2 ** item.rel - 1 : item.rel} × ${(1 / Math.log2(idx + 2)).toFixed(2)} = ${step.contrib.toFixed(2)}`}</span>
               </div>
             </div>
             <span class="grade-badge grade-${item.rel}">rel ${item.rel}</span>

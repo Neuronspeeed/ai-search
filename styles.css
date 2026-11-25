@@ -2234,3 +2234,12 @@ canvas.viz.d3.interactive { cursor: move; }
 /* ---- knowledge graph demo ---- */
 canvas.viz.kg { height: 400px; }
 @media (max-width: 600px) { canvas.viz.kg { height: 360px; } }
+
+/* ---- one boost, two searches: winners grid ---- */
+.b2-grid { display: grid; grid-template-columns: auto 1fr 1fr; gap: 6px; margin: 10px 0 4px; font-family: var(--font-mono); font-size: 12px; }
+.b2-head { color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-size: 10.5px; align-self: center; padding: 0 6px; }
+.b2-cell { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 2px; background: var(--card); }
+.b2-cell b { color: var(--fg); font-weight: 600; }
+.b2-cell span { color: var(--muted); font-size: 11px; }
+.b2-cell.e { border-color: color-mix(in srgb, var(--sem-secondary) 55%, transparent); }
+.b2-cell.g { border-color: color-mix(in srgb, var(--sem-amber) 55%, transparent); }

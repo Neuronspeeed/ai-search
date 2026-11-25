@@ -402,6 +402,70 @@
           <li><strong>Click "Orthogonal".</strong> Doc A is all apple and Doc B is all juice. They share no words, so cosine and the dot product both fall to 0 and the angle opens to 90°.</li>
         </ol>
 
+        <h3>Ranking with cosine vs. dot product</h3>
+        <p class="prose">
+          The difference matters once there is a query. Take the query <code>"apple juice"</code> and two pages: Doc 1 is a
+          lunch order that mentions apple juice once, and Doc 2 is a product page that says apple 3 times and juice 4 times.
+        </p>
+
+        <!-- DEMO: QUERY COSINE -->
+        <div class="lab" id="lab-qcos">
+          <div class="lab-header">
+            <div class="lab-title-group">
+              <span class="lab-badge">DEMO 0.3</span>
+              <span class="lab-name">Rank Two Pages for "apple juice"</span>
+            </div>
+            <span class="lab-hint">Change the word counts · watch cosine and dot product pick different winners</span>
+          </div>
+          <div class="controls-grid">
+            <div class="control">
+              <div class="control-top">
+                <label class="control-label" for="sl-qcos-d1a">Doc 1 · apple</label>
+                <span class="control-val" id="val-qcos-d1a">1×</span>
+              </div>
+              <input id="sl-qcos-d1a" type="range" min="0" max="6" step="1" value="1" />
+            </div>
+            <div class="control">
+              <div class="control-top">
+                <label class="control-label" for="sl-qcos-d1j">Doc 1 · juice</label>
+                <span class="control-val" id="val-qcos-d1j">1×</span>
+              </div>
+              <input id="sl-qcos-d1j" type="range" min="0" max="6" step="1" value="1" />
+            </div>
+            <div class="control">
+              <div class="control-top">
+                <label class="control-label" for="sl-qcos-d2a">Doc 2 · apple</label>
+                <span class="control-val" id="val-qcos-d2a">3×</span>
+              </div>
+              <input id="sl-qcos-d2a" type="range" min="0" max="6" step="1" value="3" />
+            </div>
+            <div class="control">
+              <div class="control-top">
+                <label class="control-label" for="sl-qcos-d2j">Doc 2 · juice</label>
+                <span class="control-val" id="val-qcos-d2j">4×</span>
+              </div>
+              <input id="sl-qcos-d2j" type="range" min="0" max="6" step="1" value="4" />
+            </div>
+          </div>
+          <div class="plot-pair">
+            <div>
+              <div class="plot-title"><span class="t-brand">query</span> vs. <span class="t-blue">Doc 1</span> and <span class="t-amber">Doc 2</span> · word counts</div>
+              <div class="canvas-wrap framed"><canvas id="canvas-qcos" class="viz" aria-label="Query and two documents as arrows in apple and juice space"></canvas></div>
+            </div>
+            <div>
+              <div class="plot-title">who ranks first? · <span class="t-dim">two measures</span></div>
+              <div class="canvas-wrap framed"><canvas id="canvas-qcos-rank" class="viz" aria-label="Cosine and dot product scores for both documents"></canvas></div>
+            </div>
+          </div>
+          <div class="readout lab-readout" id="ro-qcos" aria-live="polite"></div>
+        </div>
+
+        <ol class="walkthrough">
+          <li><strong>Start.</strong> Doc 1 has exactly the query's proportions: cosine 1.00, dot product 2. Doc 2 is slightly off (cosine 0.99) but much longer (dot product 7). Cosine ranks Doc 1 first; the dot product ranks Doc 2 first.</li>
+          <li><strong>Set Doc 2 · apple to 4.</strong> Now Doc 2 has the query's proportions too: cosine 1.00 for both, and the dot product climbs to 8.</li>
+          <li><strong>Set Doc 2 · apple to 0 and juice to 5.</strong> Doc 2 drops "apple" completely. Cosine falls to 0.71, yet the dot product still prefers it, 5 to 2. Raw repetition wins again, the same problem BM25 caps with k₁.</li>
+        </ol>
+
         <div class="takeaway">
           <div class="takeaway-copy">
             <div class="takeaway-tag">■ Takeaway · Next §1</div>
@@ -793,8 +857,8 @@
 
         <ul class="explain-list">
           <li><span class="explain-term">Default to BM25 for lexical search.</span> It is the baseline in Elasticsearch, OpenSearch, Lucene, and most RAG stacks.</li>
-          <li><span class="explain-term">Use it alongside embeddings, not instead of them.</span> BM25 wins on exact matches (IDs, error codes, names, specialist jargon). Dense retrievers win on paraphrase and meaning.</li>
-          <li><span class="explain-term">Start with k₁ ≈ 1.2 and b ≈ 0.75.</span> Tune on a small labeled set if your documents are very short or uneven in length.</li>
+          <li><span class="explain-term">Use it alongside embeddings, not instead of them.</span> BM25 wins on exact matches (IDs, error codes, names, specialist jargon). Dense retrievers win on paraphrase and meaning. The common setup today is both together (hybrid search, §8), followed by a reranker.</li>
+          <li><span class="explain-term">Start with k₁ ≈ 1.2 and b ≈ 0.75.</span> Tuning matters most when documents are very short or very uneven in length. Don't guess: grid-search k₁ and b on a small labeled set and keep the pair with the best NDCG@10 (the headline metric public benchmarks like BEIR report, §11).</li>
         </ul>
 
         <details class="deriv">
@@ -1148,6 +1212,48 @@
           </div>
         </details>
 
+        <h3>One boost, two searches</h3>
+        <p class="prose">
+          The clearest way to see the difference: keep the same two pages and run two searches. The rare word
+          <code>ECONNRESET</code> gives big BM25 scores; the common word <code>connection</code> gives scores ten times
+          smaller, in the same ratio. The Error Code List matches better; the Troubleshooting Guide is more popular
+          (popularity 0.9 vs 0.2).
+        </p>
+
+        <!-- DEMO: ONE BOOST, TWO SEARCHES -->
+        <div class="lab" id="lab-boost2">
+          <div class="lab-header">
+            <div class="lab-title-group">
+              <span class="lab-badge">DEMO 3.3</span>
+              <span class="lab-name">Same Two Pages, Two Searches: Plus vs. Times</span>
+            </div>
+            <span class="lab-hint">Drag the boost weight · watch "plus" give two searches two answers</span>
+          </div>
+          <div class="controls-grid">
+            <div class="control">
+              <div class="control-top">
+                <label class="control-label" for="sl-boost2-w">Boost weight (w)</label>
+                <span class="control-val" id="val-boost2-w">0.50</span>
+              </div>
+              <input id="sl-boost2-w" type="range" min="0" max="3" step="0.05" value="0.5" />
+            </div>
+          </div>
+          <div class="plot-title">who leads, as the boost grows · <span class="t-dim">above 0 = Error Code List ahead</span></div>
+          <div class="canvas-wrap framed"><span class="plot-hint" aria-hidden="true">↔ drag</span><canvas id="canvas-boost2" class="viz interactive" tabindex="0" role="application" aria-label="Lead of the Error Code List over the Troubleshooting Guide as the boost weight grows, for plus and times, in two searches. Drag or use arrow keys to change w."></canvas></div>
+          <div class="b2-grid" aria-live="polite">
+            <span></span><span class="b2-head">ECONNRESET</span><span class="b2-head">connection</span>
+            <span class="b2-head">plus</span><span id="boost2-plus-rare" class="b2-cell"></span><span id="boost2-plus-common" class="b2-cell"></span>
+            <span class="b2-head">times</span><span id="boost2-times-rare" class="b2-cell"></span><span id="boost2-times-common" class="b2-cell"></span>
+          </div>
+          <div class="readout lab-readout" id="ro-boost2" aria-live="polite"></div>
+        </div>
+
+        <ol class="walkthrough">
+          <li><strong>Start at w = 0.5.</strong> Times: the Error Code List wins both searches. Plus: it wins ECONNRESET (12.10 vs 9.45) but loses connection (1.30 vs 1.35). The same added bonus is tiny next to big scores and huge next to small ones.</li>
+          <li><strong>Raise w to 1.</strong> Times: the Troubleshooting Guide now wins both searches, so the two searches still agree. Plus: they still disagree.</li>
+          <li><strong>Watch the green line.</strong> Under "times" both searches sit on exactly the same line, because multiplying keeps each search's score ratio. A multiplied boost affects every search the same way; an added boost has to be tuned to each search's score range. The flip side: push a multiplied boost too high and popularity swamps relevance.</li>
+        </ol>
+
         <h3>From a raw signals log to boosts</h3>
         <p class="prose">
           Signals start with a log. A good format is one flat log with five fields per event:
@@ -1170,7 +1276,7 @@
         <div class="lab" id="lab-signals-log">
           <div class="lab-header">
             <div class="lab-title-group">
-              <span class="lab-badge">DEMO 3.3</span>
+              <span class="lab-badge">DEMO 3.4</span>
               <span class="lab-name">Raw Signals Log → Boosts for "econnreset"</span>
             </div>
             <span class="lab-hint">Turn on each fix · watch the bot lose</span>
@@ -1222,7 +1328,7 @@
         <div class="lab" id="lab-pers">
           <div class="lab-header">
             <div class="lab-title-group">
-              <span class="lab-badge">DEMO 3.4</span>
+              <span class="lab-badge">DEMO 3.5</span>
               <span class="lab-name">Collaborative Filtering (U · Vᵀ) &amp; Guardrails</span>
             </div>
             <span class="lab-hint">Switch users · watch the guardrail block off-topic boosts</span>
@@ -2285,7 +2391,7 @@
             <div class="takeaway-tag">■ Takeaway · Next §8</div>
             <p class="takeaway-text">
               Dense vectors handle synonyms and paraphrases, while BM25 still wins on exact error codes, SKUs, and rare
-              terms. Most production systems run both and merge the lists.
+              terms. Most production systems run both, merge the lists (often with RRF), and then rerank the top results.
             </p>
           </div>
           <a class="next-link" href="#hybrid">Next: §8 Hybrid search</a>
@@ -2333,6 +2439,7 @@
             <span class="preset-label">Scenario:</span>
             <button type="button" class="pill-btn adversarial active" data-hybrid-scenario="outlier">Outlier BM25 spike</button>
             <button type="button" class="pill-btn" data-hybrid-scenario="consensus">Consensus win</button>
+            <button type="button" class="pill-btn" data-hybrid-scenario="onelist">A page only one list finds</button>
           </div>
 
           <div class="controls-grid">
@@ -2395,6 +2502,9 @@
           <li><strong>Start on "Outlier BM25 spike" (k = 60, w = 50%).</strong> RRF crowns "Fixing ECONNRESET" because #2 in BM25 plus #1 in Vector beats #1 plus #4. RSF crowns "Stuffed FAQ" because its raw BM25 spike (14.2 vs 5.4) dominates min-max scaling.</li>
           <li><strong>Lower RSF weight w to 0.25.</strong> Now vector similarity drives RSF and both lists agree on "Fixing ECONNRESET".</li>
           <li><strong>Click "Consensus win" and drop RRF k to 1.</strong> At k = 1, first place counts far more than second place, shifting the RRF leader.</li>
+          <li><strong>Click "A page only one list finds" and set k back to 60.</strong> "Connection Resets" is #1 in the vector list, but BM25 never found it: the page says "connection reset", not "ECONNRESET". With one vote instead of two, RRF ranks it only #6.</li>
+          <li><strong>Drop k to 1.</strong> Its single first place now counts much more, and it climbs to #4 (tied with Changelog 2.4).</li>
+          <li><strong>Lower the RSF weight w to 0.10.</strong> RSF now trusts the vector scores, and Connection Resets takes #1 in RSF. Rescuing pages like this is why hybrid search exists; k and w decide how hard it tries.</li>
         </ol>
 
         <div class="takeaway">
@@ -2932,7 +3042,7 @@
         <ul class="explain-list">
           <li><span class="explain-term">G (Gain).</span> Points for one result from its grade: <code>2^rel − 1</code>. Grade 3 earns 7; grade 0 earns 0.</li>
           <li><span class="explain-term">C (Cumulative).</span> Add up the points of every result in the top <code>k</code>.</li>
-          <li><span class="explain-term">D (Discounted).</span> Shrink each result by its rank: rank 1 counts 100%, rank 2 counts 63%, rank 5 counts 39%, rank 10 counts 29%.</li>
+          <li><span class="explain-term">D (Discounted).</span> Shrink each result by its rank: rank 1 counts 100%, rank 2 63%, rank 3 50%, rank 4 43%, rank 5 39%, and rank 10 only 29%.</li>
           <li><span class="explain-term">N (Normalized).</span> Divide by the score of the ideal order (IDCG) so queries stay comparable on <code>[0, 1]</code>.</li>
           <li><span class="explain-term">@k (Cutoff).</span> Only the top <code>k</code> results count. Anything past rank <code>k</code> adds nothing.</li>
         </ul>
@@ -3029,7 +3139,7 @@
           <li><span class="explain-term">MRR for one-right-answer search.</span> When each question has one right answer, or labels mark about one relevant passage per query (as in MS MARCO, which reports MRR@10), score each query as <code>1 / rank of the first right answer</code> and average over queries: rank 1 → 1.0, rank 2 → 0.5, rank 4 → 0.25. That's <em>Mean Reciprocal Rank</em>. RAG is different: it wants several useful passages, so recall-style metrics fit it better.</li>
           <li><span class="explain-term">The NDCG paradox.</span> NDCG divides by the best order of the docs you judged. If every judged doc is only marginally relevant (say all grade 1), the best order is just as mediocre, so any order of them scores NDCG = 1.0 even though nothing is good. (If all are grade 0, NDCG is undefined; most libraries report 0.) Some teams divide by the best possible DCG (all top grades) instead.</li>
           <li><span class="explain-term">IDCG uses all judged docs for the query.</span> A relevant document you never retrieved still lowers your score.</li>
-          <li><span class="explain-term">Unjudged docs count as irrelevant.</span> Check how much of your top 10 is labeled, and check whether your library uses linear gain (<code>rel</code>) or exponential gain (<code>2^rel − 1</code>) before comparing numbers.</li>
+          <li><span class="explain-term">Unjudged docs count as irrelevant.</span> So a new system that surfaces good but never-labeled pages gets penalized unfairly. Check how much of your top 10 is labeled, and check whether your library uses linear gain (<code>rel</code>) or exponential gain (<code>2^rel − 1</code>) before comparing numbers.</li>
           <li><span class="explain-term">Calibrate LLM-as-judge labels.</span> Check agreement against a human-labeled sample (e.g., Krippendorff's alpha) before trusting NDCG deltas. Don't assume humans are the gold standard. Paid human raters are often noisy and rushed. LLM labels are consistent (though they can all share the same bias), and a judging rubric can be fixed and re-run like code. In published comparisons, LLM labels have matched real searchers' preferences better than paid crowd labels.</li>
           <li><span class="explain-term">Expected Reciprocal Rank (ERR) and Session-Based Eval.</span> ERR models a cascade user who scans down the list and stops at each result with a probability that grows with its grade. Session-based evaluation scores the whole multi-query journey rather than isolated queries.</li>
           <li><span class="explain-term">BlitzRank tournaments and synthetic pairwise judgments.</span> BlitzRank asks an LLM to rank small groups of documents, records every "A beat B" as an edge in a graph, and fills in pairs that never met by assuming wins carry over (A &gt; B and B &gt; C means A &gt; C). LLMs aren't always consistent, so you get loops like A &gt; B &gt; C &gt; A. BlitzRank treats each loop as a tie and groups those docs together (the paper calls them strongly connected components). It only sorts the top M you ask for. Below that the order isn't set, so don't read it as a ranking. The same pairwise pattern can bootstrap cold-start LTR datasets from clustered passages.</li>

@@ -364,27 +364,43 @@ export const HYBRID_SCENARIOS = {
       { id: "d4", title: "SDK v4.x Changelog", bm25: 5.2, vec: 0.48 },
     ],
   },
+  onelist: {
+    label: "A page only one list finds",
+    // bm25: null = BM25 never retrieved it (the page doesn't contain the word)
+    docs: [
+      { id: "e1", title: "Error Code List", bm25: 14.2, vec: 0.86 },
+      { id: "e2", title: "Changelog 2.4", bm25: 9.8, vec: 0.7 },
+      { id: "e3", title: "Socket Errors", bm25: 8.1, vec: 0.9 },
+      { id: "e4", title: "Retry Policy", bm25: 6.0, vec: 0.84 },
+      { id: "e5", title: "Proxy Setup", bm25: 4.2, vec: 0.6 },
+      { id: "e6", title: "Connection Resets", bm25: null, vec: 0.93 },
+      { id: "e7", title: "Timeouts", bm25: null, vec: 0.66 },
+      { id: "e8", title: "Load Balancer FAQ", bm25: null, vec: 0.55 },
+    ],
+  },
 };
 
 export function fuseHybrid(docs, mode = "rrf", k = 60, bm25Weight = 0.5) {
-  const byBm25 = [...docs].sort((a, b) => b.bm25 - a.bm25);
-  const byVec = [...docs].sort((a, b) => b.vec - a.vec);
+  // a page missing from a list (score null) gets no RRF vote and 0 in RSF from that list
+  const inB = docs.filter((d) => d.bm25 != null), inV = docs.filter((d) => d.vec != null);
+  const byBm25 = [...inB].sort((a, b) => b.bm25 - a.bm25);
+  const byVec = [...inV].sort((a, b) => b.vec - a.vec);
   const rankBm25 = new Map(byBm25.map((d, i) => [d.id, i + 1]));
   const rankVec = new Map(byVec.map((d, i) => [d.id, i + 1]));
 
-  const minB = Math.min(...docs.map((d) => d.bm25));
-  const maxB = Math.max(...docs.map((d) => d.bm25));
-  const minV = Math.min(...docs.map((d) => d.vec));
-  const maxV = Math.max(...docs.map((d) => d.vec));
+  const minB = Math.min(...inB.map((d) => d.bm25));
+  const maxB = Math.max(...inB.map((d) => d.bm25));
+  const minV = Math.min(...inV.map((d) => d.vec));
+  const maxV = Math.max(...inV.map((d) => d.vec));
 
   return docs
     .map((d) => {
-      const rB = rankBm25.get(d.id);
-      const rV = rankVec.get(d.id);
-      const rrfB = 1 / (k + rB);
-      const rrfV = 1 / (k + rV);
-      const normB = maxB > minB ? (d.bm25 - minB) / (maxB - minB) : 1;
-      const normV = maxV > minV ? (d.vec - minV) / (maxV - minV) : 1;
+      const rB = rankBm25.get(d.id) ?? null;
+      const rV = rankVec.get(d.id) ?? null;
+      const rrfB = rB ? 1 / (k + rB) : 0;
+      const rrfV = rV ? 1 / (k + rV) : 0;
+      const normB = rB == null ? 0 : maxB > minB ? (d.bm25 - minB) / (maxB - minB) : 1;
+      const normV = rV == null ? 0 : maxV > minV ? (d.vec - minV) / (maxV - minV) : 1;
       const rsfB = bm25Weight * normB;
       const rsfV = (1 - bm25Weight) * normV;
       const fused = mode === "rrf" ? rrfB + rrfV : rsfB + rsfV;
