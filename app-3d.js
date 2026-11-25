@@ -70,8 +70,21 @@ function bindOrbit(canvas, cam, { tipScreen, onTip, onChange }) {
   const stop = () => { mode = null; canvas.style.cursor = "move"; };
   canvas.addEventListener("pointerup", stop);
   canvas.addEventListener("pointercancel", stop);
+  // buttons outside the canvas can spin it too (no dragging needed)
+  document.querySelectorAll(`[data-spin-target="${canvas.id}"]`).forEach((b) => b.addEventListener("click", () => {
+    cam.yaw += Number(b.dataset.spin) * 0.35; onChange();
+  }));
   canvas.addEventListener("keydown", (e) => {
-    const k = e.shiftKey ? 0.2 : 0.06;
+    // Shift + arrows moves the arrow tip; plain arrows spin the view
+    if (e.shiftKey && tipScreen && onTip && e.key.startsWith("Arrow")) {
+      const t = tipScreen();
+      if (!t) return;
+      const d = { ArrowLeft: [-12, 0], ArrowRight: [12, 0], ArrowUp: [0, -12], ArrowDown: [0, 12] }[e.key];
+      onTip(cam.toSphere(t.x + d[0], t.y + d[1]));
+      e.preventDefault();
+      return;
+    }
+    const k = 0.06;
     if (e.key === "ArrowLeft") cam.yaw -= k;
     else if (e.key === "ArrowRight") cam.yaw += k;
     else if (e.key === "ArrowUp") cam.pitch = Math.max(-1.35, cam.pitch - k);
@@ -128,7 +141,7 @@ function tipHandle(ctx, T, p, color) {
 }
 
 function chip(ctx, T, x, y, text, color, align = "left") {
-  ctx.font = `600 10.5px ${T.mono}`;
+  ctx.font = `600 11.5px ${T.mono}`;
   const w = ctx.measureText(text).width + 10;
   const bx = align === "right" ? x - w : align === "center" ? x - w / 2 : x;
   ctx.fillStyle = T.card; ctx.globalAlpha = 0.88;
@@ -245,7 +258,7 @@ function initSphereLab(getTokens, prepCanvas, redrawCallbacks) {
     for (const { d, p, rank } of order) {
       const isTop = rank >= 0;
       const text = isTop ? `#${rank + 1} ${d.label}` : d.label;
-      ctx.font = `${isTop ? "600 " : ""}10.5px ${T.mono}`;
+      ctx.font = `${isTop ? "600 " : ""}11.5px ${T.mono}`;
       const tw = ctx.measureText(text).width, th = 13;
       let placed = null;
       for (const dist of [8, 18, 30, 44]) {
@@ -278,7 +291,7 @@ function initSphereLab(getTokens, prepCanvas, redrawCallbacks) {
     ctx.clearRect(0, 0, w, h);
     const l = 10, r = 46, top = 8, bottom = 22, rowH = (h - top - bottom) / rk.length;
     const X = (c) => l + ((c + 0.4) / 1.4) * (w - l - r); // domain -0.4 .. 1
-    ctx.font = `10px ${T.mono}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.font = `11px ${T.mono}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
     [0, 0.5, 1].forEach((c) => {
       ctx.strokeStyle = T.line; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(X(c), top); ctx.lineTo(X(c), h - bottom + 2); ctx.stroke();
@@ -288,7 +301,7 @@ function initSphereLab(getTokens, prepCanvas, redrawCallbacks) {
       const y0 = top + i * rowH;
       const col = T[clusters[d.k].tone];
       ctx.textBaseline = "top"; ctx.textAlign = "left";
-      ctx.font = `${i < 3 ? "600 " : ""}10.5px ${T.mono}`;
+      ctx.font = `${i < 3 ? "600 " : ""}11.5px ${T.mono}`;
       ctx.fillStyle = i < 3 ? T.fg : T.muted;
       ctx.fillText(`#${i + 1} ${d.label}`, l, y0 + 1);
       const a = X(0), b = X(Math.max(-0.4, d.cos)), by = y0 + 15, bh = Math.max(5, rowH - 19);
@@ -296,7 +309,7 @@ function initSphereLab(getTokens, prepCanvas, redrawCallbacks) {
       ctx.fillStyle = col;
       ctx.fillRect(Math.min(a, b), by, Math.max(2, Math.abs(b - a)), bh);
       ctx.globalAlpha = 1;
-      ctx.textBaseline = "middle"; ctx.fillStyle = col; ctx.font = `600 10.5px ${T.mono}`;
+      ctx.textBaseline = "middle"; ctx.fillStyle = col; ctx.font = `600 11.5px ${T.mono}`;
       ctx.fillText(d.cos.toFixed(2), Math.max(a, b) + 5, by + bh / 2);
     });
   }
@@ -381,8 +394,8 @@ function initSpikeLab(getTokens, prepCanvas, redrawCallbacks) {
     const tp = arrow3(ctx, cam, r, T.brand, 3);
     tipHandle(ctx, T, tp, T.brand);
     tipXY = tp;
-    ctx.fillStyle = T.brand; ctx.font = `600 11px ${T.mono}`; ctx.textAlign = "left"; ctx.textBaseline = "bottom";
-    ctx.fillText("Rx", tp.x + 9, tp.y - 6);
+    ctx.fillStyle = T.brand; ctx.font = `600 11px ${T.mono}`; ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText("Rx", tp.x + 9, tp.y + 8); // below the tip, so it never sits on the x₁ axis label
     chip(ctx, T, 8, h - 14, `Rx = (${r.map((v) => v.toFixed(2)).join(", ")})`, T.brand);
   }
 
@@ -391,7 +404,7 @@ function initSpikeLab(getTokens, prepCanvas, redrawCallbacks) {
     ctx.clearRect(0, 0, w, h);
     const l = 40, rr = 14, t = 24, b = 30;
     const Y = (v) => h - b - v * (h - t - b);
-    ctx.font = `10px ${T.mono}`; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ctx.font = `11px ${T.mono}`; ctx.textAlign = "right"; ctx.textBaseline = "middle";
     [0, 0.25, 0.5, 0.75, 1].forEach((v) => {
       ctx.strokeStyle = T.line; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(l, Y(v)); ctx.lineTo(w - rr, Y(v)); ctx.stroke();

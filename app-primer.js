@@ -112,7 +112,7 @@ function primIdf({ getTokens, prepCanvas, redrawCallbacks }) {
       ctx.fillStyle = i === sel ? T.blue : T.lineStrong;
       ctx.fillRect(x + bw * 0.2, f.y(v), bw * 0.6, Math.max(1, f.y(0) - f.y(v)));
       ctx.fillStyle = i === sel ? T.fg : T.muted;
-      ctx.font = `${i === sel ? "600 " : ""}10px ${T.mono}`;
+      ctx.font = `${i === sel ? "600 " : ""}11px ${T.mono}`;
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       ctx.fillText(o.w, x + bw / 2, f.bottom + 6);
@@ -150,7 +150,7 @@ function primPR({ getTokens, prepCanvas, redrawCallbacks }) {
       ctx.fillRect(x + 2, f.top + 18, bw - 4, f.plotH - 36);
       ctx.globalAlpha = 1;
       if (i % 5 === 0 || i === REL.length - 1) {
-        ctx.fillStyle = T.muted; ctx.font = `9.5px ${T.mono}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
+        ctx.fillStyle = T.muted; ctx.font = `10.5px ${T.mono}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
         ctx.fillText(`#${i + 1}`, x + bw / 2, f.bottom + 6);
       }
     });
@@ -158,7 +158,7 @@ function primPR({ getTokens, prepCanvas, redrawCallbacks }) {
     ctx.strokeStyle = T.amber; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
     ctx.beginPath(); ctx.moveTo(cx, f.top + 4); ctx.lineTo(cx, f.bottom); ctx.stroke(); ctx.setLineDash([]);
     handle(ctx, T, cx, f.top + 8, T.amber, 6);
-    ctx.fillStyle = T.muted; ctx.font = `10px ${T.mono}`; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = T.muted; ctx.font = `11px ${T.mono}`; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
     ctx.fillText("shown ←", Math.max(f.left, cx - 58), f.top + 2);
     const found = REL.slice(0, k).reduce((a, b) => a + b, 0);
     const P = found / k;
@@ -266,7 +266,7 @@ function primNN({ getTokens, prepCanvas, redrawCallbacks }) {
       ctx.beginPath(); ctx.arc(f.x(p.x), f.y(p.y), hit ? 5 : 4, 0, Math.PI * 2);
       ctx.fillStyle = hit ? T.brand : p.g === "billing" ? T.amber : p.g === "timeouts" ? T.blue : T.coral;
       ctx.globalAlpha = hit ? 1 : 0.7; ctx.fill(); ctx.globalAlpha = 1;
-      ctx.fillStyle = hit ? T.fg : T.muted; ctx.font = `${hit ? "600 " : ""}9.5px ${T.mono}`;
+      ctx.fillStyle = hit ? T.fg : T.muted; ctx.font = `${hit ? "600 " : ""}${hit ? 10.5 : 9.5}px ${T.mono}`;
       const right = p.x > 6.5;
       ctx.textAlign = right ? "right" : "left"; ctx.textBaseline = "middle";
       ctx.fillText(p.t, f.x(p.x) + (right ? -8 : 8), f.y(p.y));
@@ -278,7 +278,7 @@ function primNN({ getTokens, prepCanvas, redrawCallbacks }) {
     readout(document.getElementById("prim-nn-ro"), [["nearest", `"${top[0].t}"`], ["neighborhood", group]],
       sameGroup ? `All 3 nearest phrases are about ${group}, even ones that share no words with each other.` : "You're between neighborhoods, so the nearest phrases mix topics. A real query would be pulled toward one meaning.");
   };
-  bindDrag(c, (p) => { if (f) { q = { x: clamp(f.invX(p.x), 0, 10), y: clamp(f.invY(p.y), 0, 10) }; render(); } }, (d) => { q = { x: clamp(q.x + d * 0.4, 0, 10), y: q.y }; render(); });
+  bindDrag(c, (p) => { if (f) { q = { x: clamp(f.invX(p.x), 0, 10), y: clamp(f.invY(p.y), 0, 10) }; render(); } }, (d, key) => { const vert = key === "ArrowUp" || key === "ArrowDown"; q = vert ? { x: q.x, y: clamp(q.y + d * 0.4, 0, 10) } : { x: clamp(q.x + d * 0.4, 0, 10), y: q.y }; render(); });
   redrawCallbacks.push(render);
 }
 
@@ -310,7 +310,7 @@ function primQuant({ getTokens, prepCanvas, redrawCallbacks }) {
       ctx.globalAlpha = 1;
       ctx.beginPath(); ctx.arc(f.x(v), f.top + 8, 3.5, 0, Math.PI * 2); ctx.fillStyle = T.blue; ctx.fill();
     });
-    ctx.fillStyle = T.muted; ctx.font = `9.5px ${T.mono}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.fillStyle = T.muted; ctx.font = `10.5px ${T.mono}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
     [-1, -0.5, 0, 0.5, 1].forEach((t) => ctx.fillText(String(t), f.x(t), f.bottom + 6));
     readout(document.getElementById("prim-q-ro"), [["bits", bits], ["levels", L], ["gap", step.toFixed(2)], ["max possible error", (step / 2).toFixed(2)], ["worst of these 7", maxErr.toFixed(2)]],
       bits === 1 ? "1 bit = 2 levels: every number becomes just + or −. Tiny, but crude." : `${bits} bits = ${L} levels. Going from ${bits - 1} to ${bits} bits halved the gap from ${(step * 2).toFixed(2)} to ${step.toFixed(2)}.`);

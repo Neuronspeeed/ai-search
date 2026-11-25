@@ -4,6 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Search Basics, Interactive | Andrei Moise</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <meta name="theme-color" content="#090909" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="How search works: Search Basics, Interactive" />
+  <meta property="og:description" content="Live demos you can drag and click: BM25, click signals, knowledge graphs, vectors, hybrid search, NDCG, RAG, and agents." />
+  <meta property="og:url" content="https://neuronspeeed.github.io/ai-search/" />
+  <meta property="og:image" content="https://neuronspeeed.github.io/ai-search/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="How search works: a BM25 saturation curve next to the title" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="How search works: Search Basics, Interactive" />
+  <meta name="twitter:description" content="Live demos you can drag and click: BM25, vectors, hybrid search, NDCG, RAG, and agents." />
+  <meta name="twitter:image" content="https://neuronspeeed.github.io/ai-search/og.png" />
   <meta name="description" content="Interactive notes on how search works: inverted indexes, boolean filters, BM25, user signals, knowledge graphs, learning to rank, dense vectors, hybrid fusion, NDCG, and RAG." />
 
   <!-- Prevent theme FOUC before first paint -->
@@ -68,7 +82,7 @@
       <option value="agentic">§13 Agents &amp; Caching</option>
       </optgroup>
     </select>
-    <button type="button" class="theme-btn" data-theme-toggle aria-label="Toggle light or dark theme">
+    <button type="button" class="theme-btn" data-theme-toggle>
       <span data-theme-label>LIGHT</span>
     </button>
   </header>
@@ -108,7 +122,7 @@
       </ul>
 
       <div class="toc-footer">
-        <button type="button" class="theme-btn" data-theme-toggle aria-label="Toggle light or dark theme">
+        <button type="button" class="theme-btn" data-theme-toggle>
           <span data-theme-label>LIGHT MODE</span>
         </button>
       </div>
@@ -253,11 +267,14 @@
           </div>
         </div>
 
-        <ul class="explain-list">
+        <details class="deeper">
+          <summary>Go deeper · 3 more notes</summary>
+          <ul class="explain-list">
           <li><span class="explain-term">Stemming vs. lemmatization.</span> Stemming chops suffixes with simple rules (<code>retries</code> becomes <code>retry</code>, <code>running</code> becomes <code>run</code>; exact output depends on the stemmer). Lemmatization uses a dictionary so <code>better</code> maps to <code>good</code>, at higher CPU cost. Stemming adds false positives. Skip it when you need precision, such as normalizing queries for click signals or matching exact entities. For documents, a common fix is two fields, one stemmed and one unstemmed, with the unstemmed one boosted higher.</li>
           <li><span class="explain-term">Stop-word pitfalls.</span> Dropping common words like <code>the</code> or <code>in</code> shrinks the index, but breaks queries like <code>"to be or not to be"</code> or <code>"Vitamin A"</code>. Modern BM25 engines often keep stop words and let low IDF down-weight them. Low IDF fixes <em>ranking</em>, not <em>matching</em>. With an OR query, <code>"the hobbit"</code> still pulls in every page that contains <code>the</code> once the hobbit pages run out. Pair kept stop words with min match (<code>mm</code>, §1).</li>
           <li><span class="explain-term">Distributional semantics.</span> Words that appear in similar document neighborhoods share meaning. That single observation powers both knowledge graphs (§4) and dense embeddings (§7).</li>
-        </ul>
+          </ul>
+        </details>
 
         <!-- DEMO: LIVE TOKENIZER & INVERTED INDEX -->
         <div class="lab" id="lab-tokenizer">
@@ -377,7 +394,7 @@
           </div>
 
           <div class="readout lab-readout" id="ro-vec" aria-live="polite"></div>
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi">
               <span class="kpi-label">Cosine Similarity</span>
               <span class="kpi-val brand" id="kpi-cos">1.000</span>
@@ -576,7 +593,7 @@
           </div>
 
           <div class="readout lab-readout" id="ro-funnel" aria-live="polite"></div>
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi">
               <span class="kpi-label">Indexed Corpus</span>
               <span class="kpi-val" id="kpi-funnel-total">8</span>
@@ -716,7 +733,7 @@
           </div>
 
           <div class="readout lab-readout" id="ro-tfidf" aria-live="polite"></div>
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi">
               <span class="kpi-label">TF-IDF #1</span>
               <span class="kpi-val coral" id="kpi-tfidf-win">Stuffed FAQ</span>
@@ -828,7 +845,7 @@
           </div>
 
           <div class="readout lab-readout" id="ro-bm25" aria-live="polite"></div>
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi">
               <span class="kpi-label">Raw tf → BM25 weight</span>
               <span class="kpi-val brand" id="kpi-bm25-w">1.55</span>
@@ -955,7 +972,7 @@
                 <span class="pane-title">explain: <span id="fields-explain-doc">d1</span></span>
                 <span class="pane-badge">BM25 per field</span>
               </div>
-              <pre class="explain-tree" id="fields-explain" aria-live="polite"></pre>
+              <pre class="explain-tree" id="fields-explain"></pre>
             </div>
           </div>
         </div>
@@ -972,6 +989,8 @@
           dropped before checking that words are next to
           each other.
         </p>
+
+        <div class="quiz" data-quiz="p1"></div>
 
         <div class="takeaway">
           <div class="takeaway-copy">
@@ -1063,7 +1082,7 @@
           </div>
 
           <div class="readout lab-readout" id="ro-news" aria-live="polite"></div>
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi"><span class="kpi-label">#1 Article</span><span class="kpi-val brand" id="kpi-news-top">Basketball: The Complete…</span><span class="kpi-sub">Top of the page</span></div>
             <div class="kpi"><span class="kpi-label">Its Age</span><span class="kpi-val amber" id="kpi-news-age">4.0 yr old</span><span class="kpi-sub">News readers want fresh</span></div>
             <div class="kpi"><span class="kpi-label">Its Distance</span><span class="kpi-val blue" id="kpi-news-km">4,000 km</span><span class="kpi-sub">From the reader</span></div>
@@ -1175,7 +1194,7 @@
           </div>
 
           <div class="readout lab-readout" id="ro-boost" aria-live="polite"></div>
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi">
               <span class="kpi-label">Additive (+) #1</span>
               <span class="kpi-val brand" id="kpi-boost-add">Getting Started</span>
@@ -1308,7 +1327,7 @@
           </div>
 
           <div class="readout lab-readout" id="ro-sig" aria-live="polite"></div>
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi"><span class="kpi-label">Boosted to #1</span><span class="kpi-val coral" id="kpi-sig-top">d5</span><span class="kpi-sub">d5 is the keyword-stuffed FAQ</span></div>
             <div class="kpi"><span class="kpi-label">Events Counted</span><span class="kpi-val blue" id="kpi-sig-used">34</span><span class="kpi-sub">After the fixes you turned on</span></div>
           </div>
@@ -1353,7 +1372,7 @@
 
           <div class="doc-list" id="pers-doc-list"></div>
 
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi">
               <span class="kpi-label">#1 Personalized Result</span>
               <span class="kpi-val brand" id="kpi-pers-top">Fixing ECONNRESET</span>
@@ -1408,9 +1427,14 @@
           <li><span class="explain-term">Query log mining.</span> Users teach you your domain vocabulary when they reformulate failed queries. Mining query pairs surfaces domain synonyms (<code>socket hang up</code> and <code>ECONNRESET</code>), misspellings, and multi-word phrases automatically.</li>
           <li><span class="explain-term">Two-level sense disambiguation.</span> An ambiguous word like <code>driver</code> cannot be expanded blindly. A two-level SKG traversal first identifies the category (<code>databases</code> vs. <code>golf</code> or <code>rideshare</code>) and then expands terms only inside that subgraph.</li>
           <li><span class="explain-term">Semantic functions.</span> Trigger words like <code>top</code>, <code>near</code>, or <code>under $50</code> do not belong in the keyword query. The transform step converts them into rating boosts, geospatial <code>geofilt</code> clauses, or range filters.</li>
+        </ul>
+        <details class="deeper">
+          <summary>Go deeper · 2 more notes</summary>
+          <ul class="explain-list">
           <li><span class="explain-term">Explicit triples and Hearst patterns.</span> Alongside statistical SKGs, Open Information Extraction parses sentences like <code>"databases such as Postgres"</code> into explicit RDF triples (Subject, Predicate, Object) stored in a sidecar collection for exact taxonomical hierarchies.</li>
           <li><span class="explain-term">Knowledge modeling spectrum.</span> Separate alternative labels (deterministic replacements for acronyms and typos), synonyms (broader recall expansion), and ontologies/taxonomies (structural <code>is_a</code> class hierarchies) instead of dumping everything into one synonym file.</li>
-        </ul>
+          </ul>
+        </details>
 
         <div class="lab" id="lab-semantic-query">
           <div class="lab-header">
@@ -1562,6 +1586,7 @@
             <canvas id="canvas-kg" class="viz kg interactive" tabindex="0" role="application" aria-label="Knowledge graph. The center word is linked to its most related words; line thickness is the relatedness score. Click a word, or use arrow keys and Enter, to hop to it. Backspace goes back."></canvas>
           </div>
           <p class="lab-legend">Line thickness and the number on each line = relatedness (−1 to +1), computed live from a toy forum of 4,000 posts. Colors are topics: <span class="t-brand">network errors</span>, <span class="t-blue">databases</span>, <span class="t-amber">golf</span>, <span class="t-coral">rideshare</span>, and gray for billing. Only words seen in at least 5 posts with relatedness ≥ 0.2 are drawn. Dashed lines are the second hop.</p>
+          <span class="sr-only" id="kg-live" aria-live="polite"></span>
           <div class="readout lab-readout" id="ro-kg" aria-live="polite"></div>
         </div>
 
@@ -1636,7 +1661,7 @@
             </div>
           </div>
 
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi">
               <span class="kpi-label">Right Fixes</span>
               <span class="kpi-val brand" id="kpi-spell-learned">9</span>
@@ -1801,7 +1826,7 @@
           </div>
 
           <div class="readout lab-readout" id="ro-beta" aria-live="polite"></div>
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi">
               <span class="kpi-label">Last Clicked Rank</span>
               <span class="kpi-val blue" id="kpi-sdbn-last">Rank #3</span>
@@ -1839,7 +1864,7 @@
 
           <div class="doc-list" id="active-doc-list"></div>
 
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi">
               <span class="kpi-label">New Doc (d9) Rank</span>
               <span class="kpi-val coral" id="kpi-active-rank">#3</span>
@@ -1898,10 +1923,15 @@
         <ul class="explain-list">
           <li><span class="explain-term">LTR generalizes; boosting memorizes.</span> Signals boosting stores "for query <em>q</em>, doc <em>d</em> got clicks". A brand-new query has no row, so boosting does nothing. LTR learns <em>patterns</em> instead, like "a strong title match plus a recent date means relevant". Those patterns apply to any query, including one nobody has typed before. That is the "generalized relevance" in the §3 table.</li>
           <li><span class="explain-term">Split train and test by query ID (qid).</span> Never split randomly by document row. If the same query lands in both train and test, your model memorizes the query and leaks accuracy.</li>
+        </ul>
+        <details class="deeper">
+          <summary>Go deeper · 3 more notes</summary>
+          <ul class="explain-list">
           <li><span class="explain-term">In-engine feature logging and efi.</span> Extract live BM25 scores and query-time external feature info (<code>efi</code>) directly from Elasticsearch/OpenSearch/Solr (via LTR plugins or named queries) so training features match production scoring without offline re-computation. Hosting the model inside an engine plugin is getting less common. At scale, a request is only as fast as the slowest node (tail latency), so many teams pull the top-N candidates and their features into a separate reranking service instead.</li>
           <li><span class="explain-term">What production teams rerank with.</span> Many e-commerce teams rerank with LambdaMART rather than a cross-encoder, because what matters most there is domain features like popularity, price, and PageRank (in job search, commute distance). Embedding similarity goes in as one more feature.</li>
           <li><span class="explain-term">SVMRank vs. LambdaMART.</span> SVMRank fits a linear hyperplane that orders each pair of results for a query: the more relevant doc lands on the positive side of <code>w · (x_A − x_B)</code>. LambdaMART trains boosted decision trees on gradients weighted by how much each swap would change NDCG, so training targets NDCG even though NDCG itself can't be differentiated.</li>
-        </ul>
+          </ul>
+        </details>
 
         <details class="deriv">
           <summary>Offline vs. online metrics, and splitting data by query</summary>
@@ -1992,7 +2022,7 @@
 
           <div class="doc-list" id="ltr-doc-list"></div>
 
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi">
               <span class="kpi-label">Pairwise Inversions</span>
               <span class="kpi-val coral" id="kpi-ltr-inv">6</span>
@@ -2047,7 +2077,7 @@
             </div>
           </div>
 
-          <div class="tree-view" id="tree-view" aria-live="polite">
+          <div class="tree-view" id="tree-view">
             <div class="tree-node" data-node="t"><code>title_bm25 &gt; 2 ?</code></div>
             <div class="tree-branches">
               <div class="tree-branch">
@@ -2074,7 +2104,7 @@
           </div>
 
           <div class="readout lab-readout" id="ro-tree" aria-live="polite"></div>
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi"><span class="kpi-label">This Tree's Output</span><span class="kpi-val brand" id="kpi-tree-score">12</span><span class="kpi-sub">≈ the lambda it learned to predict</span></div>
             <div class="kpi"><span class="kpi-label">Real Model</span><span class="kpi-val blue">100s of trees</span><span class="kpi-sub">Final score = sum of all trees</span></div>
           </div>
@@ -2108,6 +2138,8 @@
           <li><span class="explain-term">Why it needs a loop.</span> A model trained only on past clicks can only learn from what it already showed. Exploring breaks that echo chamber, and retraining on fresh data lets the ranker follow trends and seasons.</li>
           <li><span class="explain-term">Humans still steer.</span> You pick the explore features, the click model, the model type, and the risk setting (<code>θ</code>) for how boldly to explore.</li>
         </ul>
+
+        <div class="quiz" data-quiz="p2"></div>
 
         <div class="takeaway">
           <div class="takeaway-copy">
@@ -2168,13 +2200,15 @@
             <button type="button" class="pill-btn" data-sphere="password">"reset my password"</button>
             <button type="button" class="pill-btn" data-sphere="reset">just "reset"</button>
             <button type="button" class="pill-btn" data-sphere="refund">"refund"</button>
+            <button type="button" class="pill-btn" id="btn-spin-l-canvas-sphere" data-spin-target="canvas-sphere" data-spin="-1" aria-label="Spin view left">◀ Spin</button>
+            <button type="button" class="pill-btn" id="btn-spin-r-canvas-sphere" data-spin-target="canvas-sphere" data-spin="1" aria-label="Spin view right">Spin ▶</button>
           </div>
 
           <div class="plot-pair lead">
             <div>
               <div class="plot-title"><span class="t-brand">meaning space</span> · 3 dims (real models use 768+)</div>
               <div class="canvas-wrap framed"><span class="plot-hint" aria-hidden="true">drag tip · drag to spin</span>
-                <canvas id="canvas-sphere" class="viz tall d3 interactive" tabindex="0" role="application" aria-label="Nine pages as points on a unit sphere and a query arrow. Drag the arrow tip to move the query, drag empty space or use arrow keys to spin the view."></canvas>
+                <canvas id="canvas-sphere" class="viz tall d3 interactive" tabindex="0" role="application" aria-label="Nine pages as points on a unit sphere and a query arrow. Drag the arrow tip, or press Shift plus arrow keys, to move the query. Drag empty space or use arrow keys to spin the view."></canvas>
               </div>
             </div>
             <div>
@@ -2197,13 +2231,18 @@
 
         <h3>Where the vectors come from</h3>
         <ul class="explain-list">
+          <li><span class="explain-term">One vector per token, not per sentence.</span> The raw output is a list of token vectors. Search needs one vector per query or doc, so they get pooled.</li>
+          <li><span class="explain-term">Bi-encoder = two-tower model.</span> Same thing, two names. It can be one shared encoder for both sides (like SBERT) or two separate towers. Asymmetric models also mark queries and documents differently (for example "query:" and "passage:" prefixes), because short queries and long documents look different. You can also train your own on search traffic: Reddit trained one on what users actually clicked. Off-the-shelf models only work well on the kind of matching they were trained for, so check before you use one.</li>
+        </ul>
+        <details class="deeper">
+          <summary>Go deeper · 4 more notes</summary>
+          <ul class="explain-list">
           <li><span class="explain-term">Subword tokens.</span> A Transformer like BERT first splits text into WordPiece tokens. Common words stay whole, and rare ones break into pieces, so an unknown error code still gets a vector from its parts. Special tokens mark the start (<code>[CLS]</code>) and the breaks (<code>[SEP]</code>).</li>
           <li><span class="explain-term">Attention gives context.</span> Each token looks at every other token in the sentence and blends in what it learns. So <code>reset</code> in "connection reset" ends up with a different vector than <code>reset</code> in "reset my password".</li>
           <li><span class="explain-term">Learned by filling in blanks.</span> BERT trains itself with the Cloze test: hide about 15% of the tokens and predict them from the rest (masked language modeling). No labels needed, so it can read huge amounts of text.</li>
-          <li><span class="explain-term">One vector per token, not per sentence.</span> The raw output is a list of token vectors. Search needs one vector per query or doc, so they get pooled.</li>
           <li><span class="explain-term">SBERT: pooling + similarity tuning.</span> Raw BERT vectors are poor at cosine search out of the box. Sentence-BERT averages the token vectors (mean pooling), then fine-tunes the model on sentence-pair data like NLI and STS-B, so that similar meanings really land close together. A name like <code>roberta-base-nli-stsb-mean-tokens</code> spells out the recipe. Mean pooling is the simple way to picture it, but pooling depends on the model, and some weight tokens differently using attention.</li>
-          <li><span class="explain-term">Bi-encoder = two-tower model.</span> Same thing, two names. It can be one shared encoder for both sides (like SBERT) or two separate towers. Asymmetric models also mark queries and documents differently (for example "query:" and "passage:" prefixes), because short queries and long documents look different. You can also train your own on search traffic: Reddit trained one on what users actually clicked. Off-the-shelf models only work well on the kind of matching they were trained for, so check before you use one.</li>
-        </ul>
+          </ul>
+        </details>
 
         <div class="eq-strip">
           <div class="eq-label">Mean Pooling (token vectors → one sentence vector)</div>
@@ -2255,9 +2294,12 @@
           <li><strong>Click "1 sentence".</strong> Still a strong match, but each sentence is now alone: "Enable keepalive to avoid resets" no longer knows it's from the SDK v4 release notes. That lost context is why late chunking or late interaction is often better (see the chunking note below).</li>
         </ol>
 
-        <ul class="explain-list">
+        <details class="deeper">
+          <summary>Go deeper · 1 more note</summary>
+          <ul class="explain-list">
           <li><span class="explain-term">Contextual chunking and multivalued vector fields.</span> Splitting a long page into isolated chunks strips away headings and parent metadata. Prepending section breadcrumbs, overlapping sliding token windows, and storing multiple chunk vectors in one parent document record keeps context intact. Avoid chunking if you can, because every split loses context. Best first: late interaction (one vector per token, far less dependent on chunk size, §10). Next: <strong>late chunking</strong>, also offered as "contextualized chunk embeddings", where the model reads the whole document first and then splits the token vectors into chunks, so each chunk still knows its context. Last: plain chunking.</li>
-        </ul>
+          </ul>
+        </details>
 
         <h3>Semantic autocomplete: "things, not strings"</h3>
         <p class="prose">
@@ -2479,7 +2521,7 @@
           </div>
 
           <div class="readout lab-readout" id="ro-hybrid" aria-live="polite"></div>
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi">
               <span class="kpi-label">RRF #1 Winner</span>
               <span class="kpi-val brand" id="kpi-hybrid-rrf">Fixing ECONNRESET</span>
@@ -2607,7 +2649,7 @@
             </div>
           </div>
 
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi">
               <span class="kpi-label">Recall@3 vs. Exact</span>
               <span class="kpi-val brand" id="kpi-dense-recall">100%</span>
@@ -2744,7 +2786,7 @@
           <p class="lab-legend">A toy index of 2,000 vectors × 64 dims, 40 queries. "Recall@10" = how many of the exact FP32 top-10 results each format still finds.</p>
 
           <div class="readout lab-readout" id="ro-mrl" aria-live="polite"></div>
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi">
               <span class="kpi-label">RAM for 1M × 1,536-dim</span>
               <span class="kpi-val brand" id="kpi-mrl-mem">1,465 MB</span>
@@ -2793,13 +2835,15 @@
           <div class="preset-row">
             <button type="button" class="pill-btn" id="btn-spike-rot">↻ Draw a fresh rotation</button>
             <button type="button" class="pill-btn" id="btn-spike-reset">Back to the spike</button>
+            <button type="button" class="pill-btn" id="btn-spin-l-canvas-spike3d" data-spin-target="canvas-spike3d" data-spin="-1" aria-label="Spin view left">◀ Spin</button>
+            <button type="button" class="pill-btn" id="btn-spin-r-canvas-spike3d" data-spin-target="canvas-spike3d" data-spin="1" aria-label="Spin view right">Spin ▶</button>
           </div>
 
           <div class="plot-pair lead">
             <div>
               <div class="plot-title"><span class="t-brand">geometry</span> · <span class="t-blue">x</span> and its rotation <span class="t-brand">Rx</span></div>
               <div class="canvas-wrap framed"><span class="plot-hint" aria-hidden="true">drag tip · drag to spin</span>
-                <canvas id="canvas-spike3d" class="viz tall d3 interactive" tabindex="0" role="application" aria-label="A unit vector inside a cube, before and after rotation. Drag the tip to choose a rotation, drag empty space or use arrow keys to spin the view."></canvas>
+                <canvas id="canvas-spike3d" class="viz tall d3 interactive" tabindex="0" role="application" aria-label="A unit vector inside a cube, before and after rotation. Drag the tip, or press Shift plus arrow keys, to choose a rotation. Drag empty space or use arrow keys to spin the view."></canvas>
               </div>
             </div>
             <div>
@@ -2812,7 +2856,7 @@
           <p class="lab-legend"><span class="t-blue">x = (1, 0, 0)</span> puts all of its length in one coordinate. Any rotation of x is just another arrow of length 1, so dragging the tip is the same as picking a rotation.</p>
 
           <div class="readout lab-readout" id="ro-spike" aria-live="polite"></div>
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi"><span class="kpi-label">Largest |coordinate|</span><span class="kpi-val coral" id="kpi-spike-max">1.00</span><span class="kpi-sub">spike → after rotating</span></div>
             <div class="kpi"><span class="kpi-label">Length</span><span class="kpi-val blue" id="kpi-spike-len">1.000</span><span class="kpi-sub">Always 1: rotation is exact</span></div>
             <div class="kpi"><span class="kpi-label">Best Possible in 3D</span><span class="kpi-val amber">0.577</span><span class="kpi-sub">every coordinate = 1/√3</span></div>
@@ -2866,7 +2910,7 @@
           <p class="lab-legend">Bars = values. Amber ticks = the level each value gets rounded to. Both charts use the same scale.</p>
 
           <div class="readout lab-readout" id="ro-rot" aria-live="polite"></div>
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi"><span class="kpi-label">Largest |value|</span><span class="kpi-val coral" id="kpi-rot-max">1.60</span><span class="kpi-sub">before → after rotating</span></div>
             <div class="kpi"><span class="kpi-label">Vector Length</span><span class="kpi-val blue" id="kpi-rot-len">1.730</span><span class="kpi-sub">Unchanged: rotation is exact</span></div>
             <div class="kpi"><span class="kpi-label">Quantization Error (MSE)</span><span class="kpi-val brand" id="kpi-rot-err">—</span><span class="kpi-sub" id="kpi-rot-err-sub">3.3× less error after rotating</span></div>
@@ -2907,10 +2951,15 @@
         <ul class="explain-list">
           <li><span class="explain-term">Late interaction (ColBERT, ColPali).</span> Stores one contextual vector per token at index time. At query time, each query token finds its single highest dot product across all document tokens (<code>MaxSim</code>), then sums those maximums. ColPali applies the same idea to PDF page image patches.</li>
           <li><span class="explain-term">Sparse lexical expansion (SPLADE, Doc2Query).</span> SPLADE uses a transformer to predict importance weights across the full vocabulary, expanding short text with synonyms like <code>socket hang up → econnreset, keepalive, tcp</code> so it runs directly inside a fast inverted index. Doc2Query gets a similar effect differently: it generates likely queries and appends them to the document as text.</li>
+        </ul>
+        <details class="deeper">
+          <summary>Go deeper · 3 more notes</summary>
+          <ul class="explain-list">
           <li><span class="explain-term">System One (Decision Models) as rerankers.</span> Compact decision models (such as <code>pplx-decider-flash</code>) score query-document relevance fast enough for production reranking, bridging classic cross-encoders and expensive frontier LLMs. Sizes run from about 1.7B up to roughly 21B–31B for the top benchmark scores, and bigger usually does better. Reranking is only one job. Because they pick from a fixed list of answers, they also handle query classification and query understanding, routing (for example, which team gets this message), and fine-tuned domain classifiers. Decision models can replace a lot of what used to need a full LLM, often fast enough even for regular search. Expect hundreds of ms per rerank call, with big swings on hosted APIs.</li>
           <li><span class="explain-term">Why "System One"?</span> The name comes from the two modes of thinking: System 1 is fast and intuitive, System 2 is slow and deliberate. A decision model is built for System 1. It doesn't reason step by step; it picks one answer from a fixed list in a single step. Its confidence comes from the score the model gives each option's token, the same scores an LLM uses to choose its next word. The trade-off: speed and low cost, with a ceiling on accuracy for problems that need real thinking.</li>
           <li><span class="explain-term">Watch the word "pairwise".</span> In LTR (§6), pairwise means comparing doc A against doc B. In reranker APIs, "pairwise" often means scoring one (query, doc) pair per call, and "listwise" means sending all candidates together.</li>
-        </ul>
+          </ul>
+        </details>
 
         <div class="eq-strip">
           <div class="eq-label">ColBERT MaxSim Scoring</div>
@@ -2940,7 +2989,7 @@
             <div class="table-scroll" id="maxsim-grid"></div>
           </div>
 
-          <div class="kpi-strip" aria-live="polite">
+          <div class="kpi-strip">
             <div class="kpi">
               <span class="kpi-label">Total MaxSim Score</span>
               <span class="kpi-val brand" id="kpi-maxsim-score">3.73</span>
@@ -3007,6 +3056,8 @@
           </div>
           <div id="wormhole-out" aria-live="polite"></div>
         </div>
+
+        <div class="quiz" data-quiz="p3"></div>
 
         <div class="takeaway">
           <div class="takeaway-copy">
@@ -3101,6 +3152,7 @@
             </div>
           </div>
 
+          <span class="sr-only" id="ndcg-move-live" aria-live="polite"></span>
           <div class="readout lab-readout" id="ro-ndcg" aria-live="polite"></div>
           <div class="kpi-strip" aria-live="polite" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
             <div class="kpi">
@@ -3137,13 +3189,18 @@
           <li><span class="explain-term">For agents and RAG, order matters less.</span> When an LLM reads the top 10–20 results, it matters much less whether the best one is #1 or #8 (though LLMs still favor some positions in their input). Set-level recall (Recall@20) often tracks answer quality better than NDCG@10. NDCG still matters for ranked lists that people scan.</li>
           <li><span class="explain-term">Graded vs. pass/fail labels.</span> Simple good/not-good labels are faster to collect and more consistent between raters, and often enough for agent evals. Graded labels (0–3) still matter when you <em>train</em> a ranker like LTR, because it has to learn why one good result beats another.</li>
           <li><span class="explain-term">MRR for one-right-answer search.</span> When each question has one right answer, or labels mark about one relevant passage per query (as in MS MARCO, which reports MRR@10), score each query as <code>1 / rank of the first right answer</code> and average over queries: rank 1 → 1.0, rank 2 → 0.5, rank 4 → 0.25. That's <em>Mean Reciprocal Rank</em>. RAG is different: it wants several useful passages, so recall-style metrics fit it better.</li>
+          <li><span class="explain-term">Unjudged docs count as irrelevant.</span> So a new system that surfaces good but never-labeled pages gets penalized unfairly. Check how much of your top 10 is labeled, and check whether your library uses linear gain (<code>rel</code>) or exponential gain (<code>2^rel − 1</code>) before comparing numbers.</li>
+        </ul>
+        <details class="deeper">
+          <summary>Go deeper · 5 more notes</summary>
+          <ul class="explain-list">
           <li><span class="explain-term">The NDCG paradox.</span> NDCG divides by the best order of the docs you judged. If every judged doc is only marginally relevant (say all grade 1), the best order is just as mediocre, so any order of them scores NDCG = 1.0 even though nothing is good. (If all are grade 0, NDCG is undefined; most libraries report 0.) Some teams divide by the best possible DCG (all top grades) instead.</li>
           <li><span class="explain-term">IDCG uses all judged docs for the query.</span> A relevant document you never retrieved still lowers your score.</li>
-          <li><span class="explain-term">Unjudged docs count as irrelevant.</span> So a new system that surfaces good but never-labeled pages gets penalized unfairly. Check how much of your top 10 is labeled, and check whether your library uses linear gain (<code>rel</code>) or exponential gain (<code>2^rel − 1</code>) before comparing numbers.</li>
           <li><span class="explain-term">Calibrate LLM-as-judge labels.</span> Check agreement against a human-labeled sample (e.g., Krippendorff's alpha) before trusting NDCG deltas. Don't assume humans are the gold standard. Paid human raters are often noisy and rushed. LLM labels are consistent (though they can all share the same bias), and a judging rubric can be fixed and re-run like code. In published comparisons, LLM labels have matched real searchers' preferences better than paid crowd labels.</li>
           <li><span class="explain-term">Expected Reciprocal Rank (ERR) and Session-Based Eval.</span> ERR models a cascade user who scans down the list and stops at each result with a probability that grows with its grade. Session-based evaluation scores the whole multi-query journey rather than isolated queries.</li>
           <li><span class="explain-term">BlitzRank tournaments and synthetic pairwise judgments.</span> BlitzRank asks an LLM to rank small groups of documents, records every "A beat B" as an edge in a graph, and fills in pairs that never met by assuming wins carry over (A &gt; B and B &gt; C means A &gt; C). LLMs aren't always consistent, so you get loops like A &gt; B &gt; C &gt; A. BlitzRank treats each loop as a tie and groups those docs together (the paper calls them strongly connected components). It only sorts the top M you ask for. Below that the order isn't set, so don't read it as a ranking. The same pairwise pattern can bootstrap cold-start LTR datasets from clustered passages.</li>
-        </ul>
+          </ul>
+        </details>
 
         <!-- DEMO: METRICS PLAYGROUND -->
         <div class="lab" id="lab-metrics">
@@ -3188,6 +3245,8 @@
           <li><strong>Click "First good result at #6", then drag k from 5 to 6.</strong> At k = 5, every metric is 0: the good result is past the cutoff. At k = 6 they all wake up. Always check which k a number was measured at.</li>
           <li><strong>Click any row</strong> to flip it between good and not good, and watch which metrics move. MRR only ever looks at the first good row.</li>
         </ol>
+
+        <div class="quiz" data-quiz="p4"></div>
 
         <div class="takeaway">
           <div class="takeaway-copy">
@@ -3265,12 +3324,17 @@
         <ul class="explain-list">
           <li><span class="explain-term">Extractive QA: retriever-reader.</span> The search engine retrieves candidate passages (maximizing Recall@k). A fine-tuned reader model predicts two token distributions, <code>P_start(i)</code> and <code>P_end(j)</code>, ranks spans by <code>P_start(i) × P_end(j)</code>, and abstains when the <code>[CLS]</code> null score (<code>P_start(CLS) × P_end(CLS)</code>) beats the best span.</li>
           <li><span class="explain-term">Grounded RAG and abstention.</span> The LLM is constrained to answer strictly from retrieved passages with inline citations. If no chunk clears your similarity threshold <code>τ</code>, skip generation and return "not found" rather than hallucinating. A raw embedding cutoff is fragile. Embeddings <em>rank</em>; they don't <em>match</em>, and picking a cutoff is a well-known weakness of embedding models. Model scores also aren't true probabilities for your data. Use query understanding and filters to decide what's eligible, put thresholds on a reranker's score instead, or have an LLM check citations before answering.</li>
+        </ul>
+        <details class="deeper">
+          <summary>Go deeper · 5 more notes</summary>
+          <ul class="explain-list">
           <li><span class="explain-term">Multimodal retrieval.</span> Models like CLIP project text and images into one shared embedding space, letting a text query retrieve diagrams, screenshots, or products using the same ANN index.</li>
           <li><span class="explain-term">Golden sets and QA error taxonomy.</span> Bootstrap a machine-labeled silver set, then audit with humans using four classes: <code>1</code> Correct, <code>0</code> Fixed, <code>-1</code> Impossible/Abstain, and <code>-2</code> Incorrect (a known-wrong span kept as a negative example).</li>
           <li><span class="explain-term">Token offset alignment and SQuAD EM vs. F1.</span> Long passages are sliced with sliding <code>doc_stride</code> windows while mapping character offsets to subword tokens. Extractive readers are scored with Exact Match (EM: exact equality after normalizing case, punctuation, and articles) and token-level F1 (partial overlap).</li>
           <li><span class="explain-term">HyDE (Hypothetical Document Embeddings).</span> For tough questions, ask an LLM to draft a hypothetical answer first and embed that draft so vector search matches document phrasing instead of short question phrasing.</li>
           <li><span class="explain-term">Programmatic prompt optimization with DSPy.</span> Instead of hand-tweaking fragile prompt strings, compile signatures and few-shot examples against an objective metric (Exact Match, F1, schema validity).</li>
-        </ul>
+          </ul>
+        </details>
 
         <div class="lab" id="lab-qa">
           <div class="lab-header">
@@ -3398,9 +3462,12 @@
           </table>
         </div>
 
-        <ul class="explain-list">
+        <details class="deeper">
+          <summary>Go deeper · 1 more note</summary>
+          <ul class="explain-list">
           <li><span class="explain-term">Video RAG: MomentSearch architecture.</span> Video retrieval indexes two things: overlapping transcript windows and video frames. Frames must be heavily thinned and deduplicated first, because 24–60 nearly identical frames per second flood the index. A query runs three searches at once (BM25 on transcripts, vectors on transcripts, CLIP on frames). The two transcript lists are merged, and <em>only then</em> are speech and frames grouped into timestamped "moments" for reranking, an LLM check, and a timestamped answer. Plain transcripts say <em>what</em> was said and <em>when</em>, but not <em>who</em>. A multimodal LLM can watch the video and mark speaker changes.</li>
-        </ul>
+          </ul>
+        </details>
 
         <div class="lab" id="lab-cache">
           <div class="lab-header">
@@ -3455,6 +3522,8 @@
           BM25 + vectors inside each tool. Give an agent a "BM25 tool" and a "vector tool" over the same data, and it
           will probably just call both every time.
         </p>
+
+        <div class="quiz" data-quiz="p5"></div>
 
         <div class="takeaway">
           <div class="takeaway-copy">

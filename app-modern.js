@@ -145,7 +145,7 @@ export function initModernLabs({ getTokens, prepCanvas, redrawCallbacks }) {
     const maxW = 2.4;
 
     const compactSp = w < 360;
-    ctx.font = `600 10px ${T.mono}`;
+    ctx.font = `600 11px ${T.mono}`;
     ctx.textAlign = "left";
     const legX = compactSp ? 8 : pad.left;
     ctx.fillStyle = T.blue;
@@ -163,7 +163,7 @@ export function initModernLabs({ getTokens, prepCanvas, redrawCallbacks }) {
       const bw = (t.w / maxW) * plotW;
 
       ctx.fillStyle = t.orig ? T.blue : T.fg;
-      ctx.font = `10.5px ${T.mono}`;
+      ctx.font = `11.5px ${T.mono}`;
       ctx.textAlign = "right";
       ctx.fillText(t.term, pad.left - 8, y + bh * 0.75);
 

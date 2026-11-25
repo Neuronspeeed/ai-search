@@ -291,7 +291,7 @@ function initCompressLab(getTokens, prepCanvas, redrawCallbacks) {
         ctx.beginPath(); ctx.arc(X, f.y(r1), 4, 0, Math.PI * 2);
         ctx.fillStyle = active ? T.brand : T.muted; ctx.fill();
         ctx.fillStyle = active ? T.fg : T.muted;
-        ctx.font = `${active ? "600 " : ""}10px ${T.mono}`;
+        ctx.font = `${active ? "600 " : ""}11px ${T.mono}`;
         ctx.textBaseline = "middle";
         const nearRight = X > f.right - 50;
         ctx.textAlign = nearRight ? "right" : "left";
@@ -470,7 +470,7 @@ function initPqLab(getTokens, prepCanvas, redrawCallbacks) {
     for (let m = 0; m < PQM; m += 1) {
       const x0 = f.left + m * PQSUB * bw;
       if (m > 0) { ctx.strokeStyle = T.lineStrong; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(x0, f.top - 6); ctx.lineTo(x0, f.bottom); ctx.stroke(); ctx.setLineDash([]); }
-      ctx.fillStyle = T.fg; ctx.font = `600 10.5px ${T.mono}`; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+      ctx.fillStyle = T.fg; ctx.font = `600 11.5px ${T.mono}`; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
       const pieceW = PQSUB * bw;
       ctx.fillText(pieceW > 120 ? `piece ${m + 1} → ID ${enc.ids[m]}` : `ID ${enc.ids[m]}`, x0 + pieceW / 2, f.top - 8);
     }

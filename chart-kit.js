@@ -80,7 +80,7 @@ export function axes(ctx, T, f, o = {}) {
   ctx.stroke();
   // ticks + labels
   ctx.fillStyle = T.muted;
-  ctx.font = `10px ${T.mono}`;
+  ctx.font = `11px ${T.mono}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   xt.forEach((v) => {
@@ -96,7 +96,7 @@ export function axes(ctx, T, f, o = {}) {
     ctx.fillText(yFmt(v), f.left - 7, yy);
   });
   // titles
-  ctx.font = `10px ${T.mono}`;
+  ctx.font = `11px ${T.mono}`;
   if (o.xTitle) {
     ctx.textAlign = "right";
     ctx.textBaseline = "alphabetic";
@@ -138,7 +138,7 @@ function chip(ctx, T, x, y, text, color, o = {}) {
 /** items: [{label, color, kind: "line"|"dash"|"dot"|"bar"}] */
 export function legend(ctx, T, f, items, placer, corner = "tr") {
   ctx.save();
-  ctx.font = `10px ${T.mono}`;
+  ctx.font = `11px ${T.mono}`;
   const rowH = 15;
   const sw = 16;
   const w = Math.max(...items.map((i) => ctx.measureText(i.label).width)) + sw + 22;
@@ -292,8 +292,8 @@ export function bindDrag(canvas, onDrag, onKey, canStart = () => true) {
   canvas.addEventListener("pointercancel", stop);
   if (onKey) canvas.addEventListener("keydown", (e) => {
     const step = e.shiftKey ? 5 : 1;
-    if (e.key === "ArrowRight" || e.key === "ArrowUp") onKey(step);
-    else if (e.key === "ArrowLeft" || e.key === "ArrowDown") onKey(-step);
+    if (e.key === "ArrowRight" || e.key === "ArrowUp") onKey(step, e.key);
+    else if (e.key === "ArrowLeft" || e.key === "ArrowDown") onKey(-step, e.key);
     else return;
     e.preventDefault();
   });
@@ -302,6 +302,10 @@ export function bindDrag(canvas, onDrag, onKey, canStart = () => true) {
 /** Fill a .readout element: pairs of [label, value] plus one plain-words verdict. */
 export function readout(el, pairs, verdict, tone = "") {
   if (!el) return;
-  el.innerHTML = pairs.map(([k, v]) => `<span class="ro"><b>${k}</b>${v}</span>`).join("")
+  const html = pairs.map(([k, v]) => `<span class="ro"><b>${k}</b>${v}</span>`).join("")
     + (verdict ? `<span class="ro-verdict ${tone}">${verdict}</span>` : "");
+  // skip identical rewrites so screen readers don't re-announce on theme change or resize
+  if (el.dataset.last === html) return;
+  el.dataset.last = html;
+  el.innerHTML = html;
 }

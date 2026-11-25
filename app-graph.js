@@ -147,7 +147,7 @@ export function initGraphLab({ getTokens, prepCanvas, redrawCallbacks }) {
       ctx.globalAlpha = 1;
       if (n.depth === 1) {
         const mx = from[0] + (to[0] - from[0]) * 0.6, my = from[1] + (to[1] - from[1]) * 0.6;
-        ctx.font = `600 10px ${T.mono}`;
+        ctx.font = `600 11px ${T.mono}`;
         const txt = `+${n.rel.toFixed(2)}`;
         const tw = ctx.measureText(txt).width + 8;
         ctx.fillStyle = T.card; ctx.fillRect(mx - tw / 2, my - 8, tw, 16);
@@ -264,6 +264,8 @@ export function initGraphLab({ getTokens, prepCanvas, redrawCallbacks }) {
     else return;
     e.preventDefault();
     hover = hop1[sel].w;
+    const live = document.getElementById("kg-live");
+    if (live) live.textContent = `Selected ${hop1[sel].w}, relatedness ${hop1[sel].rel.toFixed(2)}, ${sel + 1} of ${hop1.length}. Press Enter to hop.`;
     draw(getTokens(), nodes, pos, cv.getBoundingClientRect().width, cv.getBoundingClientRect().height);
   });
   document.querySelectorAll("[data-kg-start]").forEach((b) => b.addEventListener("click", () => {

@@ -16,6 +16,7 @@ import { initQuantLabs } from "./app-quant.js";
 import { init3dLabs } from "./app-3d.js";
 import { initGraphLab } from "./app-graph.js";
 import { initRankingLabs } from "./app-ranking.js";
+import { initUx } from "./app-ux.js";
 import { initPrimerLabs } from "./app-primer.js";
 import { readout } from "./chart-kit.js";
 
@@ -103,11 +104,12 @@ document.querySelectorAll("nav.toc a[href^='#']").forEach((a) => {
   tocLinks.set(a.getAttribute("href").slice(1), a);
 });
 
+const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const mobileSelect = document.getElementById("mobile-chapter-select");
 if (mobileSelect) {
   mobileSelect.addEventListener("change", () => {
     const target = document.getElementById(mobileSelect.value);
-    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (target) target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
   });
 }
 
@@ -121,6 +123,7 @@ function updateScrollspy() {
   }
   tocLinks.forEach((a, id) => {
     a.classList.toggle("active", id === current);
+    if (id === current) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current");
   });
   if (mobileSelect && current && mobileSelect.value !== current) {
     mobileSelect.value = current;
@@ -131,7 +134,8 @@ updateScrollspy();
 
 // Global a11y enhancer: sync aria-pressed on all pill buttons, aria-expanded on details, and # anchors on h2s
 function syncAllAriaPressed() {
-  document.querySelectorAll(".pill-btn").forEach((btn) => {
+  // only option/preset pills are toggles; one-shot action buttons (id="btn-…") are plain buttons
+  document.querySelectorAll(".pill-btn:not([id^='btn-'])").forEach((btn) => {
     btn.setAttribute("aria-pressed", btn.classList.contains("active") ? "true" : "false");
   });
 }
@@ -153,7 +157,8 @@ document.querySelectorAll("section.chapter[id] > h2").forEach((h2) => {
   a.className = "heading-anchor";
   a.href = `#${secId}`;
   a.textContent = "#";
-  a.setAttribute("aria-label", `Link to section ${h2.textContent.trim()}`);
+  a.setAttribute("aria-hidden", "true"); // the heading text is enough for screen readers
+  a.tabIndex = -1;
   a.addEventListener("click", () => {
     try {
       const url = `${window.location.origin}${window.location.pathname}#${secId}`;
@@ -380,7 +385,7 @@ function renderVectors() {
     ctx.save();
     ctx.translate(14, pad.top + size / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText("juice (tf) →", 0, 0);
+    ctx.fillText("juice (tf)", 0, 0);
     ctx.restore();
 
     // Geometric projection shadow of Doc A onto Doc B
@@ -481,7 +486,7 @@ function renderVectors() {
     // Horizontal grid
     ctx.strokeStyle = T.line;
     ctx.fillStyle = T.muted;
-    ctx.font = `10.5px ${T.mono}`;
+    ctx.font = `11.5px ${T.mono}`;
     ctx.textAlign = "right";
     const step = vecState.unitNorm ? 0.3 : 2;
     for (let v = 0; v <= maxVal + 0.001; v += step) {
@@ -512,7 +517,7 @@ function renderVectors() {
       ctx.fillRect(cx - barW - 3, pad.top + plotH - ha, barW, ha);
       ctx.fillStyle = T.brand;
       ctx.textAlign = "center";
-      ctx.font = `600 10.5px ${T.mono}`;
+      ctx.font = `600 11.5px ${T.mono}`;
       ctx.fillText(g.va.toFixed(vecState.unitNorm ? 2 : 1), cx - barW / 2 - 3, pad.top + plotH - ha - 5);
 
       // Doc B bar
@@ -750,7 +755,7 @@ function evalFunnel() {
     ctx.fillText(`${st.label} · ${st.count}`, w / 2, y + boxH / 2 - 2);
 
     ctx.fillStyle = T.muted;
-    ctx.font = `10px ${T.mono}`;
+    ctx.font = `11px ${T.mono}`;
     ctx.fillText(st.sub, w / 2, y + boxH / 2 + 13);
   });
 }
@@ -817,6 +822,7 @@ initGapCanvasLabs({ getTokens, prepCanvas, redrawCallbacks });
 init3dLabs({ getTokens, prepCanvas, redrawCallbacks });
 initGraphLab({ getTokens, prepCanvas, redrawCallbacks });
 initRankingLabs({ getTokens, prepCanvas, redrawCallbacks });
+initUx();
 syncAllAriaPressed();
 
 // Trigger KaTeX auto-render once deferred script loads

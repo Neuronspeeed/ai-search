@@ -119,7 +119,7 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
       ctx.fillRect(x, y, bw, barH);
 
       ctx.fillStyle = n.z >= 0 ? T.fg : T.coral;
-      ctx.font = `600 10.5px ${T.mono}`;
+      ctx.font = `600 11.5px ${T.mono}`;
       ctx.textAlign = "left";
       if (n.z >= 0) {
         ctx.fillText(`+${n.z.toFixed(2)}`, x + bw + 6, y + barH * 0.72);
@@ -129,7 +129,7 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
     });
 
     ctx.fillStyle = T.muted;
-    ctx.font = `10px ${T.mono}`;
+    ctx.font = `11px ${T.mono}`;
     ctx.textAlign = "center";
     ctx.fillText("-1.0", pad.left + 12, h - 6);
     ctx.fillText("0.0", zeroX, h - 6);
@@ -324,7 +324,7 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
 
     // X-axis ticks
     ctx.fillStyle = T.muted;
-    ctx.font = `10px ${T.mono}`;
+    ctx.font = `11px ${T.mono}`;
     ctx.textAlign = "center";
     for (let p = 0; p <= 100; p += 25) {
       ctx.fillText(`${p}%`, toX(p / 100), pad.top + plotH + 15);
@@ -566,7 +566,7 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
       ctx.stroke();
 
       ctx.fillStyle = isProbed ? T.brand : T.muted;
-      ctx.font = `600 9.5px ${T.mono}`;
+      ctx.font = `600 10.5px ${T.mono}`;
       const ly = c.y < 0.5 ? h - 7 : 12;
       if (w < 360) {
         const isLeft = c.id === 1 || c.id === 3;
@@ -590,7 +590,7 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
       ctx.fill();
 
       ctx.fillStyle = p.probed || inPath ? T.fg : T.muted;
-      ctx.font = `10px ${T.mono}`;
+      ctx.font = `11px ${T.mono}`;
       ctx.textAlign = "left";
       ctx.fillText(p.id, px + 7, py + 3);
     });
@@ -607,7 +607,7 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
     ctx.restore();
 
     ctx.fillStyle = T.amber;
-    ctx.font = `700 10.5px ${T.mono}`;
+    ctx.font = `700 11.5px ${T.mono}`;
     ctx.textAlign = q.x > 0.65 ? "right" : "left";
     ctx.fillText("QUERY", q.x > 0.65 ? qx - 12 : qx + 12, q.y > 0.85 ? qy + 16 : qy + 4);
   }
@@ -858,8 +858,8 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
             </div>
             <span class="grade-badge grade-${item.rel}">rel ${item.rel}</span>
             <span class="move-btns">
-              <button type="button" class="mini-btn" data-move="up" data-idx="${idx}" ${idx === 0 ? "disabled" : ""} aria-label="Move up">↑</button>
-              <button type="button" class="mini-btn" data-move="down" data-idx="${idx}" ${idx === ndcgItems.length - 1 ? "disabled" : ""} aria-label="Move down">↓</button>
+              <button type="button" class="mini-btn" data-move="up" data-idx="${idx}" ${idx === 0 ? "disabled" : ""} aria-label="Move ${escapeHtml(item.title)} up">↑</button>
+              <button type="button" class="mini-btn" data-move="down" data-idx="${idx}" ${idx === ndcgItems.length - 1 ? "disabled" : ""} aria-label="Move ${escapeHtml(item.title)} down">↓</button>
             </span>
           </div>
         `;
@@ -871,8 +871,15 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
         const i = Number(btn.dataset.idx);
         const j = btn.dataset.move === "up" ? i - 1 : i + 1;
         if (j >= 0 && j < ndcgItems.length) {
+          const dir = btn.dataset.move;
           [ndcgItems[i], ndcgItems[j]] = [ndcgItems[j], ndcgItems[i]];
           renderNdcgLab();
+          // keep keyboard focus on the moved row (the list was rebuilt)
+          const again = ndcgListEl.querySelector(`[data-move="${dir}"][data-idx="${j}"]:not([disabled])`)
+            || ndcgListEl.querySelector(`[data-move="${dir === "up" ? "down" : "up"}"][data-idx="${j}"]`);
+          if (again) again.focus();
+          const live = document.getElementById("ndcg-move-live");
+          if (live) live.textContent = `${ndcgItems[j].title} moved to #${j + 1}`;
         }
       });
     });
@@ -905,7 +912,7 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
 
     ctx.strokeStyle = T.line;
     ctx.fillStyle = T.muted;
-    ctx.font = `10.5px ${T.mono}`;
+    ctx.font = `11.5px ${T.mono}`;
     ctx.textAlign = "right";
     for (let i = 0; i <= 4; i++) {
       const v = (maxY * i) / 4;
@@ -1003,7 +1010,7 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
 
     ctx.strokeStyle = T.line;
     ctx.fillStyle = T.muted;
-    ctx.font = `10px ${T.mono}`;
+    ctx.font = `11px ${T.mono}`;
     ctx.textAlign = "right";
     for (let v = 0; v <= 1.001; v += 0.25) {
       const y = pad.top + plotH - v * plotH;
@@ -1024,12 +1031,12 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
       ctx.fillRect(cx - barW / 2, pad.top + plotH - bh, barW, bh);
 
       ctx.fillStyle = ok ? T.brand : T.muted;
-      ctx.font = `600 10.5px ${T.mono}`;
+      ctx.font = `600 11.5px ${T.mono}`;
       ctx.textAlign = "center";
       ctx.fillText(c.sim.toFixed(2), cx, pad.top + plotH - bh - 6);
 
       ctx.fillStyle = T.muted;
-      ctx.font = `10px ${T.mono}`;
+      ctx.font = `11px ${T.mono}`;
       ctx.fillText(c.id, cx, pad.top + plotH + 16);
     });
 
@@ -1047,7 +1054,7 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
 
     // τ label as a chip with its own background, so it stays readable over bar values
     const tauTxt = `↕ τ = ${tau.toFixed(2)}`;
-    ctx.font = `700 10.5px ${T.mono}`;
+    ctx.font = `700 11.5px ${T.mono}`;
     const tauW = ctx.measureText(tauTxt).width + 10;
     const tauY = Math.max(4, yTau - 20);
     ctx.fillStyle = T.bg;

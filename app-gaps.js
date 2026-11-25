@@ -860,7 +860,7 @@ function initSkgCalcLab(getTokens, prepCanvas, redrawCallbacks) {
       ctx.fill();
       if (name !== term) {
         ctx.fillStyle = out ? T.lineStrong : T.muted;
-        ctx.font = `9.5px ${T.mono}`;
+        ctx.font = `10.5px ${T.mono}`;
         ctx.textBaseline = "middle";
         // hand-placed so neighbors on the curve don't collide
         const place = { kubeproxy: ["right", -7, -9], error: ["left", 7, 10], retry: ["left", 7, -9] }[name] || ["left", 7, -8];
@@ -943,10 +943,10 @@ function initPosBiasLab(getTokens, prepCanvas, redrawCallbacks) {
       if (r.raw !== null) { ctx.fillStyle = T.coral; ctx.fillRect(x0 + band * 0.39, f.y(r.raw), bw, f.y(0) - f.y(r.raw)); }
       if (r.cor !== null) { ctx.fillStyle = T.brand; ctx.fillRect(x0 + band * 0.66, f.y(r.cor), bw, f.y(0) - f.y(r.cor)); }
       ctx.fillStyle = r.p === "D" ? T.fg : T.muted;
-      ctx.font = `${r.p === "D" ? "600 " : ""}10.5px ${T.mono}`;
+      ctx.font = `${r.p === "D" ? "600 " : ""}11.5px ${T.mono}`;
       ctx.textAlign = "center"; ctx.textBaseline = "top";
       ctx.fillText(`#${r.i + 1} · page ${r.p}`, x0 + band / 2, f.bottom + 6);
-      ctx.fillStyle = T.muted; ctx.font = `9.5px ${T.mono}`;
+      ctx.fillStyle = T.muted; ctx.font = `10.5px ${T.mono}`;
       ctx.fillText(`seen ${Math.round(PB_EXAM[r.i] * 100)}%`, x0 + band / 2, f.bottom + 20);
     });
     legend(ctx, T, f, [
@@ -1045,7 +1045,7 @@ function initChunkLab(getTokens, prepCanvas, redrawCallbacks) {
     const qx = cx + Math.cos(rad(CHUNK_Q_DEG)) * R;
     const qy = cy - Math.sin(rad(CHUNK_Q_DEG)) * R;
     ctx.save(); ctx.translate(qx, qy); ctx.rotate(Math.PI / 4); ctx.fillStyle = T.amber; ctx.fillRect(-6, -6, 12, 12); ctx.restore();
-    ctx.fillStyle = T.muted; ctx.font = `9.5px ${T.mono}`; ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillStyle = T.muted; ctx.font = `10.5px ${T.mono}`; ctx.textAlign = "left"; ctx.textBaseline = "top";
     ctx.fillText("thin = sentence · thick = stored chunk", 6, 6);
 
     const maxCos = Math.max(...chunks.map((ch) => Math.max(0, ch.cos)));
@@ -1109,7 +1109,7 @@ function initCutoffLab(getTokens, prepCanvas, redrawCallbacks) {
     ctx.fillRect(f.x(tau), f.top, f.right - f.x(tau), f.plotH); ctx.globalAlpha = 1;
     CUTOFF_QUERIES.forEach((qo, i) => {
       const yMid = f.top + f.plotH * (i === 0 ? 0.3 : 0.75);
-      ctx.fillStyle = T.reading; ctx.font = `600 10.5px ${T.mono}`; ctx.textAlign = "left"; ctx.textBaseline = "bottom";
+      ctx.fillStyle = T.reading; ctx.font = `600 11.5px ${T.mono}`; ctx.textAlign = "left"; ctx.textBaseline = "bottom";
       const rowLabel = `${qo.kind}: "${qo.q}"`;
       ctx.fillText(rowLabel, f.left + 4, yMid - 14);
       P.reserve({ x: f.left + 2, y: yMid - 28, w: ctx.measureText(rowLabel).width + 6, h: 16 });

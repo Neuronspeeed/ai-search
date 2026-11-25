@@ -103,7 +103,7 @@ function initTfidfLab(getTokens, prepCanvas, redrawCallbacks) {
       ctx.font = `${r.doc.id === "d1" ? "600 " : ""}${compact ? 10 : 11}px ${T.mono}`;
       ctx.fillText(compact ? TINY[r.doc.id] : SHORT[r.doc.id], f.left - 8, cy - 6);
       ctx.fillStyle = T.muted;
-      ctx.font = `9.5px ${T.mono}`;
+      ctx.font = `10.5px ${T.mono}`;
       ctx.fillText(`${r.doc.tf.econnreset}× · ${r.doc.length}w`, f.left - 8, cy + 7);
       // bar
       const bh = Math.min(14, band * 0.42);
@@ -113,7 +113,7 @@ function initTfidfLab(getTokens, prepCanvas, redrawCallbacks) {
       ctx.globalAlpha = 1;
       // value + crown
       ctx.textAlign = "left";
-      ctx.font = `${isWin ? "600 " : ""}10.5px ${T.mono}`;
+      ctx.font = `${isWin ? "600 " : ""}11.5px ${T.mono}`;
       ctx.fillStyle = isWin ? (wrong ? T.coral : color) : T.muted;
       const label = `${r[key].toFixed(2)}${isWin ? "  #1" : ""}`;
       const lx = f.x(r[key]) + (withHandle && r.doc.id === "d5" ? 14 : 6);
@@ -389,13 +389,13 @@ function initBoostLab(getTokens, prepCanvas, redrawCallbacks) {
       ctx.fillStyle = r === winner ? T.fg : T.reading;
       ctx.font = `${r === winner ? "600 " : ""}${compact ? 10 : 11}px ${T.mono}`;
       ctx.fillText(label(r.d, compact), f.left - 8, cy - 6);
-      ctx.fillStyle = T.muted; ctx.font = `9.5px ${T.mono}`;
+      ctx.fillStyle = T.muted; ctx.font = `10.5px ${T.mono}`;
       ctx.fillText(`${r.d.bm25.toFixed(1)} · ${Math.round(r.decayed)} clk`, f.left - 8, cy + 7);
       const x0 = f.x(0), xb = f.x(r.d.bm25), xt = f.x(r[key]);
       ctx.fillStyle = T.blue; ctx.globalAlpha = 0.85; ctx.fillRect(x0, cy - bh / 2, xb - x0, bh);
       ctx.fillStyle = r === winner && hijack ? T.coral : T.amber; ctx.globalAlpha = 0.85; ctx.fillRect(xb, cy - bh / 2, xt - xb, bh);
       ctx.globalAlpha = 1;
-      ctx.textAlign = "left"; ctx.font = `${r === winner ? "600 " : ""}10.5px ${T.mono}`;
+      ctx.textAlign = "left"; ctx.font = `${r === winner ? "600 " : ""}11.5px ${T.mono}`;
       ctx.fillStyle = r === winner ? (hijack ? T.coral : T.fg) : T.muted;
       const txt = `${r[key].toFixed(2)}${r === winner ? "  #1" : ""}`;
       const tw = ctx.measureText(txt).width;
