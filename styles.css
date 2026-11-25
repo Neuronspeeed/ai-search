@@ -2308,3 +2308,11 @@ details.deeper > .explain-list { margin: 0; padding: 4px 14px 12px; border: 0; b
 .quiz-opt.right { border-color: var(--brand); background: var(--brand-tint); }
 .quiz-opt.wrong { border-color: var(--sem-coral); }
 .quiz-why { margin: 12px 0 0; color: var(--reading); min-height: 1em; }
+
+/* ---- sources ---- */
+section.sources { margin-top: 64px; padding-top: 40px; border-top: 1px solid var(--line); }
+section.sources h2 { margin: 0 0 12px; }
+.sources-list { margin: 10px 0 0; padding-left: 20px; color: var(--reading); line-height: 1.7; }
+.sources-list li { margin-bottom: 8px; }
+.sources-list a { color: var(--brand-soft, var(--brand)); }
+.page-footer a { color: inherit; text-decoration: underline; }
