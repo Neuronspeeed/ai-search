@@ -445,6 +445,8 @@ export function initAdvancedLabs({ getTokens, prepCanvas, redrawCallbacks }) {
     document.getElementById("kpi-dense-mem").innerHTML = useInt8 ? `<span class="was">100%</span><span class="arrow">→</span>25%` : "100%";
     document.getElementById("kpi-dense-lat").textContent = `${baseLatency} ms`;
     document.getElementById("dense-query-badge").textContent = `${hopPath.length - 1} hops · ${q.text}`;
+    const scoreBadge = document.getElementById("dense-score-badge");
+    if (scoreBadge) scoreBadge.textContent = useCross ? "Cross-Encoder" : "Cosine / Dot";
 
     denseListEl.innerHTML = probedRanked
       .slice(0, 5)

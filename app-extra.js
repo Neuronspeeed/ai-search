@@ -186,24 +186,25 @@ export function initExtraLabs({ getTokens, prepCanvas, redrawCallbacks }) {
       score: w.reduce((s, wi, k) => s + wi * d.f[k], 0),
     })).sort((a, b) => b.score - a.score);
 
-    // Count pairwise inversions (lower rel ranked above higher rel)
+    // Count pairwise inversions (lower rel scored strictly above higher rel; ties are not inversions)
     let inversions = 0;
+    const allTied = ranked.every((r) => Math.abs(r.score - ranked[0].score) < 1e-9);
     for (let i = 0; i < ranked.length; i++) {
       for (let j = i + 1; j < ranked.length; j++) {
-        if (ranked[i].rel < ranked[j].rel) inversions++;
+        if (ranked[i].rel < ranked[j].rel && ranked[i].score - ranked[j].score > 1e-9) inversions++;
       }
     }
 
     const maxS = Math.max(0.01, ...ranked.map((r) => r.score));
     const kpiInv = document.getElementById("kpi-ltr-inv");
     if (kpiInv) {
-      kpiInv.textContent = String(inversions);
-      kpiInv.className = `kpi-val ${inversions === 0 ? "brand" : "coral"}`;
+      kpiInv.textContent = allTied ? "0 (all tied)" : String(inversions);
+      kpiInv.className = `kpi-val ${inversions === 0 && !allTied ? "brand" : "coral"}`;
     }
     const kpiTop = document.getElementById("kpi-ltr-top");
     if (kpiTop) {
-      kpiTop.textContent = ranked[0].rel === 3 ? "Fixing ECONNRESET" : ranked[0].id === "d5" ? "Stuffed FAQ" : ranked[0].title.slice(0, 18);
-      kpiTop.className = `kpi-val ${ranked[0].rel === 3 ? "brand" : "coral"}`;
+      kpiTop.textContent = allTied ? "All tied" : ranked[0].rel === 3 ? "Fixing ECONNRESET" : ranked[0].id === "d5" ? "Stuffed FAQ" : ranked[0].title.slice(0, 18);
+      kpiTop.className = `kpi-val ${ranked[0].rel === 3 && !allTied ? "brand" : "coral"}`;
     }
 
     ltrListEl.innerHTML = ranked
@@ -250,8 +251,16 @@ export function initExtraLabs({ getTokens, prepCanvas, redrawCallbacks }) {
      ======================================================================== */
   const activeListEl = document.getElementById("active-doc-list");
   let activeState = [];
+  // seeded PRNG (mulberry32) so every run from Reset shows the same numbers
+  const ACTIVE_SEED = 42;
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+  let activeRng = mulberry32(ACTIVE_SEED);
 
   function resetActiveLearning() {
+    activeRng = mulberry32(ACTIVE_SEED);
     activeState = [
       { id: "d2", title: "Legacy Keep-Alive Guide", trueRel: 0.52, clicks: 42, imps: 80 },
       { id: "d3", title: "Retry & Backoff Patterns", trueRel: 0.48, clicks: 28, imps: 60 },
@@ -272,9 +281,9 @@ export function initExtraLabs({ getTokens, prepCanvas, redrawCallbacks }) {
       // Top 2 get impressions (position bias: #1 seen 100%, #2 seen 60%, #3-4 unseen)
       scored.slice(0, 2).forEach((entry, rank) => {
         const seenProb = rank === 0 ? 1.0 : 0.6;
-        if (Math.random() <= seenProb) {
+        if (activeRng() <= seenProb) {
           entry.d.imps += 1;
-          if (Math.random() <= entry.d.trueRel) entry.d.clicks += 1;
+          if (activeRng() <= entry.d.trueRel) entry.d.clicks += 1;
         }
       });
     }

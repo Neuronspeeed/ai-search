@@ -657,6 +657,8 @@ function initNewsLab() {
 /* ---------------------------- DEMO 4.2 ---------------------------------- */
 function initSignalsLogLab() {
   const logEl = document.getElementById("sig-log");
+  // signed boost with a true minus sign (U+2212) to match the prose
+  const fmtBoost = (v) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : "0");
   const outEl = document.getElementById("sig-boosts");
   if (!logEl || !outEl) return;
   const chk = {
@@ -696,7 +698,7 @@ function initSignalsLogLab() {
           <div class="doc-meta"><span>${x.doc}</span></div>
           <div class="doc-bar-track"><div class="doc-bar-fill${x.boost < 0 ? " neg" : ""}" style="width:${(Math.abs(x.boost) / max) * 100}%"></div></div>
         </div>
-        <span class="doc-score${x.boost < 0 ? " neg" : ""}">${x.boost > 0 ? "+" : ""}${x.boost}</span>
+        <span class="doc-score${x.boost < 0 ? " neg" : ""}">${fmtBoost(x.boost)}</span>
       </div>`).join("");
     document.getElementById("sig-key-badge").textContent = `key: "${res.key}"`;
     document.getElementById("kpi-sig-used").textContent = String(res.used);
@@ -710,7 +712,7 @@ function initSignalsLogLab() {
       const why = topDoc && topDoc.doc === "d5"
         ? "A bot (u9) clicked the junk FAQ 30 times, so it gets the top boost. Turn on \"One vote per user\" to count the bot once."
         : !opts.normalize ? `The real fix leads. But searches typed as "ECONNRESET" or " EconnReset " still don't count toward "econnreset". Turn on normalizing.`
-        : !opts.onePerUser ? `The real fix leads, but the bot's 30 clicks still count 30 times (the FAQ is at ${(res.ranked.find((x) => x.doc === "d5") || { boost: 0 }).boost > 0 ? "+" : ""}${(res.ranked.find((x) => x.doc === "d5") || { boost: 0 }).boost}). Turn on "One vote per user".`
+        : !opts.onePerUser ? `The real fix leads, but the bot's 30 clicks still count 30 times (the FAQ is at ${fmtBoost((res.ranked.find((x) => x.doc === "d5") || { boost: 0 }).boost)}). Turn on "One vote per user".`
         : !opts.negatives ? "Variants are merged now. Two users marked the FAQ \"not helpful\", but that isn't counted yet. Turn on negative signals."
         : "All three fixes are on: one bot can't outvote people, spelling variants count together, and unhelpful pages are pushed down.";
       readout(document.getElementById("ro-sig"), [["events counted", res.used], ["fixes off", off.length ? off.join(", ") : "none"]], why, topDoc && topDoc.doc === "d5" ? "warn" : "");

@@ -84,7 +84,7 @@ function primSat({ getTokens, prepCanvas, redrawCallbacks }) {
     callout(ctx, T, f.x(tf), f.y(sat(tf)), `${tf} → ${sat(tf).toFixed(2)}`, T.brand, P);
     const add = sat(tf + 1) - sat(tf);
     readout(document.getElementById("prim-sat-ro"), [["mentions", tf], ["raw count", tf], ["saturated", sat(tf).toFixed(2)], ["next adds", `+${add.toFixed(3)}`]],
-      tf <= 2 ? "Early mentions still earn real credit." : `One more mention would add only +${add.toFixed(2)}, while raw counting adds +1. Spam stops paying.`);
+      tf === 0 ? `No mentions, no credit. The first mention is worth the most: +${add.toFixed(2)}.` : tf <= 2 ? "Early mentions still earn real credit." : `One more mention would add only +${add.toFixed(2)}, while raw counting adds +1. Spam stops paying.`);
   };
   bindDrag(c, (p) => { if (f) { tf = clamp(Math.round(f.invX(p.x)), 0, 20); render(); } }, (d) => { tf = clamp(tf + d, 0, 20); render(); });
   redrawCallbacks.push(render);

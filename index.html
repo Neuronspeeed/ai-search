@@ -1498,7 +1498,7 @@
 
         <ul class="explain-list">
           <li><span class="explain-term">Reading the score.</span> Near <code>+1</code>: strongly related (<code>advil</code> for <code>pain</code>). Near <code>0</code>: no link, which is where stop words like <code>the</code> land, because they appear everywhere. Near <code>−1</code>: the word belongs to a different domain and avoids these docs.</li>
-          <li><span class="explain-term">Noise floor (<code>min_occurrences</code>).</span> A word seen in only one or two matching docs can score high by luck. So you set a minimum number of docs a word must appear in before it gets scored (the setting's name varies by engine). Always use more than 1; 25 works well on a large forum dataset.</li>
+          <li><span class="explain-term">Noise floor (<code>min_occurrences</code>).</span> A word seen in only one or two matching docs can score high by luck. So you set a minimum number of docs a word must appear in before it gets scored (the setting's name varies by engine). Always use more than 1. Start with a small threshold and tune it on your own data.</li>
           <li><span class="explain-term">The forward index makes the hop possible.</span> The inverted index maps <code>term → docs</code>. To ask "which words appear in these docs?", the engine needs the reverse, <code>doc → terms</code>. That forward index is what search engines already use for facets, and you turn it on per field with <em>doc values</em>. One SKG hop is: query → doc set (inverted index) → terms in those docs (forward index) → score each term.</li>
           <li><span class="explain-term">Works best on overlapping text.</span> SKGs need words to repeat across many docs. Forums, tickets, and reviews work well. A wiki with one page per topic gives weak scores.</li>
         </ul>
@@ -1881,7 +1881,7 @@
             <div class="kpi">
               <span class="kpi-label">Online Validation</span>
               <span class="kpi-val blue">Interleaving</span>
-              <span class="kpi-sub">Higher power than A/B</span>
+              <span class="kpi-sub">Both rankers in one list</span>
             </div>
           </div>
           <p class="lab-legend">Each query shows only the top 2 slots: #1 is always seen, #2 is seen 60% of the time. Docs are ranked by a smoothed click rate, (clicks + 1) ÷ (impressions + 4), so the unseen d9 starts at 25% and sits at #3. Greedy ranks by that rate alone, so d9 never gets shown. Active learning adds an exploration bonus, √(1.8 ÷ (impressions + 1)), that is large for docs with little data, so d9 gets tried, earns clicks, and climbs.</p>
@@ -1943,8 +1943,8 @@
             <p>
               <strong>Offline vs. online metric divergence:</strong> Offline NDCG gains often miss online A/B
               conversion lifts because of UI layout and presentation bias. Team-draft interleaving mixes results from
-              ranker A and ranker B into one list to measure user preference with far higher statistical power than split
-              A/B buckets.
+              ranker A and ranker B into one list, so the same users see both and their clicks show which ranker they
+              prefer, without splitting traffic into A/B buckets.
             </p>
             <p>
               <strong>Query-level data splitting:</strong> Partition labeled datasets strictly by
@@ -2309,10 +2309,10 @@
         <p class="prose">
           A great first embedding project is autocomplete. Pull frequent noun and verb
           phrases out of your docs (dropping rare ones seen fewer than <code>minimum_frequency</code> times, which
-          are mostly noise; 6 is a fine start), embed each phrase once, and put them in an ANN index. As the user types, embed what they typed and
+          are mostly noise; start small and tune it on your data), embed each phrase once, and put them in an ANN index. As the user types, embed what they typed and
           return the nearest phrases. A classic suggester only finds phrases that <em>start with</em> the typed letters.
           The semantic one also finds phrases that <em>mean</em> the same thing. For example, typing <code>dehyd</code>
-          can suggest <code>dehydration</code>, but also <code>rehydration</code> and <code>hydration pack</code>.
+          can suggest <code>dehydration</code>, but also <code>hydration pack</code>.
         </p>
 
         <!-- DEMO: PREFIX VS SEMANTIC AUTOCOMPLETE -->
@@ -2647,7 +2647,7 @@
             <div class="stage-pane">
               <div class="pane-head">
                 <span class="pane-title">Retrieved Neighbors</span>
-                <span class="pane-badge">Cosine / Dot</span>
+                <span class="pane-badge" id="dense-score-badge">Cosine / Dot</span>
               </div>
               <div class="doc-list" id="dense-doc-list"></div>
             </div>
@@ -2981,8 +2981,8 @@
 
           <div class="preset-row">
             <span class="preset-label">Candidate Doc:</span>
-            <button type="button" class="pill-btn active" data-maxsim-doc="good">Doc A: Fixing ECONNRESET in Node Pool</button>
-            <button type="button" class="pill-btn adversarial" data-maxsim-doc="noisy">Doc B: Node Pool Party (Lexical Trap)</button>
+            <button type="button" class="pill-btn active" data-maxsim-doc="good">Doc A: Fixing ECONNRESET in Node HTTP Pool</button>
+            <button type="button" class="pill-btn adversarial" data-maxsim-doc="noisy">Doc B: Node Pool Party (Off-Topic Lexical Trap)</button>
           </div>
 
           <div class="stage-pane">
